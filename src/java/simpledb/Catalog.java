@@ -17,13 +17,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe
  */
 public class Catalog {
+	
+	/**
+	 * Fields
+	 * 
+	 */
+	
+	private final Map<Integer, Table> tableMap; 
 
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
+	
     public Catalog() {
-        // some code goes here
+        tableMap = new HashMap<>();
     }
 
     /**
@@ -36,7 +44,31 @@ public class Catalog {
      * @param pkeyField the name of the primary key field
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        // some code goes here
+    	
+    	// TODO bad implementation, fix later
+        Table newTable = new Table(file, name, pkeyField);
+        
+        Integer identifier = file.getId();
+        
+        
+        Integer existKey = Integer.MIN_VALUE;
+        Table existTable = null;
+        // find if name exist 
+        for (Integer key: tableMap.keySet()){
+        	
+        	Table table = tableMap.get(key);
+        	
+        	if (table.getName().equals(name)){
+        		existKey = key;
+        		existTable = table;
+        	}
+        }
+        
+        
+        tableMap.remove(existKey, existTable);
+        
+        tableMap.put(identifier, newTable);
+        
     }
 
     public void addTable(DbFile file, String name) {
@@ -54,14 +86,31 @@ public class Catalog {
         addTable(file, (UUID.randomUUID()).toString());
     }
 
-    /**
-     * Return the id of the table with a specified name,
-     * @throws NoSuchElementException if the table doesn't exist
-     */
-    public int getTableId(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
-    }
+	/**
+	 * Return the id of the table with a specified name,
+	 * 
+	 * @throws NoSuchElementException
+	 *             if the table doesn't exist
+	 */
+	public int getTableId(String name) throws NoSuchElementException {
+
+		// TODO might need some testing
+		
+		
+
+		for (Integer key : tableMap.keySet()) {
+			
+			Table table = tableMap.get(key);
+
+			if (table.getName().equals(name)) {
+				return key;
+			}
+
+		}
+
+		throw new NoSuchElementException("this table doesn't exist");
+
+	}
 
     /**
      * Returns the tuple descriptor (schema) of the specified table
@@ -70,8 +119,22 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+    	
+    	//TODO needs testing??
+        
+    	try {
+    		
+    		Table table = tableMap.get(tableid);
+    		
+    		
+    		return table.getDbFile().getTupleDesc();
+    		
+    	} catch(Exception e) {
+    		
+    		throw new NoSuchElementException("table doesn't exist");
+    		
+    	}
+        
     }
 
     /**
@@ -82,27 +145,49 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+    	
+    	try {
+    		Table table = tableMap.get(tableid);
+    		return table.getDbFile();
+    	} catch (Exception e) {
+    		throw new NoSuchElementException("No such thing exist, man");
+    	}
+        
     }
 
     public String getPrimaryKey(int tableid) {
         // some code goes here
-        return null;
+    	
+    	Table table = tableMap.getOrDefault(tableid, null);
+    	
+    	if (table == null){
+    		throw new NoSuchElementException("This is not here");
+    	}
+        return table.getPkeyField();
     }
 
     public Iterator<Integer> tableIdIterator() {
-        // some code goes here
-        return null;
+        
+    	Set<Integer> setKeys = tableMap.keySet();
+    	return setKeys.iterator();
     }
 
     public String getTableName(int id) {
-        // some code goes here
-        return null;
+    	
+        Table table = tableMap.getOrDefault(id, null);
+        
+        if (table != null) {
+        	return table.getName();
+        }
+        
+        else {
+        	throw new NoSuchElementException("No table with this id");
+        }
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
-        // some code goes here
+        tableMap.clear();
     }
     
     /**
@@ -159,5 +244,46 @@ public class Catalog {
             System.exit(0);
         }
     }
+}
+
+class Table {
+	
+	/**
+	 * 
+	 * This class is a datatype for database table inside the catalog
+	 * 
+	 */
+	
+	private final DbFile dbFile;
+	private final String name;
+	private final String pkeyField;
+	
+	public Table(DbFile dbFile, String name, String pkeyField) {
+		this.dbFile = dbFile;
+		this.name = name;
+		this.pkeyField = pkeyField;
+	}
+	
+	public DbFile getDbFile() {
+		
+		return this.dbFile;
+		
+	}
+	
+	public String getName() {
+		return this.name;
+	}
+	
+	public String getPkeyField() {
+		
+		return this.pkeyField;
+	}
+	
+	public String toString() {
+		
+		return "(" + name + "): " + "(" + pkeyField + ")";
+	}
+	
+	
 }
 
