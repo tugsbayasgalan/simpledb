@@ -85,13 +85,11 @@ public class HeapFile implements DbFile {
 			RandomAccessFile raf = new RandomAccessFile(this.file, "r");
 
 			byte[] readData = new byte[pageSize];
-			System.out.println("Total size " + totalSize);
+			
 			raf.seek(totalSize);
 			
 			int readBytes = raf.read(readData, 0, pageSize);
-			System.out.println("Read Bytes " + readBytes);
 			
-			System.out.println(pageSize);
 
 			if (readBytes == pageSize) {
 
