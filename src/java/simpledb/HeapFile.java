@@ -3,37 +3,44 @@ package simpledb;
 import java.io.*;
 import java.util.*;
 
+
 /**
  * HeapFile is an implementation of a DbFile that stores a collection of tuples
  * in no particular order. Tuples are stored on pages, each of which is a fixed
  * size, and the file is simply a collection of those pages. HeapFile works
  * closely with HeapPage. The format of HeapPages is described in the HeapPage
  * constructor.
- * 
+ *
  * @see simpledb.HeapPage#HeapPage
  * @author Sam Madden
  */
 public class HeapFile implements DbFile {
 
+
+	private final File file;
+	private final TupleDesc td;
+
     /**
      * Constructs a heap file backed by the specified file.
-     * 
+     *
      * @param f
      *            the file that stores the on-disk backing store for this heap
      *            file.
      */
     public HeapFile(File f, TupleDesc td) {
-        // some code goes here
+
+    	this.file = f;
+    	this.td = td;
     }
 
     /**
      * Returns the File backing this HeapFile on disk.
-     * 
+     *
      * @return the File backing this HeapFile on disk.
      */
     public File getFile() {
-        // some code goes here
-        return null;
+
+    	return this.file;
     }
 
     /**
@@ -42,28 +49,73 @@ public class HeapFile implements DbFile {
      * HeapFile has a "unique id," and that you always return the same value for
      * a particular HeapFile. We suggest hashing the absolute file name of the
      * file underlying the heapfile, i.e. f.getAbsoluteFile().hashCode().
-     * 
+     *
      * @return an ID uniquely identifying this HeapFile.
      */
     public int getId() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return this.file.getAbsoluteFile().hashCode();
     }
 
     /**
      * Returns the TupleDesc of the table stored in this DbFile.
-     * 
+     *
      * @return TupleDesc of this DbFile.
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return this.td;
     }
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
         // some code goes here
-        return null;
+
+    	// this is gonna be long
+
+    	// useful variables
+    	int tableId = pid.getTableId();
+    	int numPage = pid.getPageNumber();
+    	int pageSize = BufferPool.getPageSize();
+    	int totalSize = pageSize * numPage;
+    	
+    	
+
+    	try {
+			RandomAccessFile raf = new RandomAccessFile(this.file, "r");
+
+			byte[] readData = new byte[pageSize];
+			System.out.println("Total size " + totalSize);
+			raf.seek(totalSize);
+			
+			int readBytes = raf.read(readData, 0, pageSize);
+			System.out.println("Read Bytes " + readBytes);
+			
+			System.out.println(pageSize);
+
+			if (readBytes == pageSize) {
+
+				HeapPageId pageId= new HeapPageId(tableId, numPage);
+				HeapPage page = new HeapPage(pageId, readData);
+				raf.close();
+				return page;
+
+			}
+
+			else {
+				raf.close();
+				throw new RuntimeException("It didn't read everything");
+				
+			}
+			
+			
+
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException("Something is wrong with formatting");
+		} 
+
     }
 
     // see DbFile.java for javadocs
@@ -77,7 +129,11 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return 0;
+        int pageSize = BufferPool.getPageSize();
+
+        int numPages = (int) Math.ceil(this.getFile().length() * 1.0/ pageSize);
+
+        return numPages;
     }
 
     // see DbFile.java for javadocs
@@ -98,9 +154,10 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        // some code goes here
-        return null;
+
+        return new HeapFileIterator(tid, this.numPages(), this.getId());
     }
 
-}
 
+
+}

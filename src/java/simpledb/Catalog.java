@@ -31,7 +31,7 @@ public class Catalog {
      */
 	
     public Catalog() {
-        tableMap = new HashMap<>();
+        this.tableMap = new HashMap<>();
     }
 
     /**
@@ -54,9 +54,9 @@ public class Catalog {
         Integer existKey = Integer.MIN_VALUE;
         Table existTable = null;
         // find if name exist 
-        for (Integer key: tableMap.keySet()){
+        for (Integer key: this.tableMap.keySet()){
         	
-        	Table table = tableMap.get(key);
+        	Table table = this.tableMap.get(key);
         	
         	if (table.getName().equals(name)){
         		existKey = key;
@@ -65,9 +65,9 @@ public class Catalog {
         }
         
         
-        tableMap.remove(existKey, existTable);
+        this.tableMap.remove(existKey, existTable);
         
-        tableMap.put(identifier, newTable);
+        this.tableMap.put(identifier, newTable);
         
     }
 
@@ -98,9 +98,9 @@ public class Catalog {
 		
 		
 
-		for (Integer key : tableMap.keySet()) {
+		for (Integer key : this.tableMap.keySet()) {
 			
-			Table table = tableMap.get(key);
+			Table table = this.tableMap.get(key);
 
 			if (table.getName().equals(name)) {
 				return key;
@@ -124,7 +124,7 @@ public class Catalog {
         
     	try {
     		
-    		Table table = tableMap.get(tableid);
+    		Table table = this.tableMap.get(tableid);
     		
     		
     		return table.getDbFile().getTupleDesc();
@@ -147,7 +147,7 @@ public class Catalog {
         // some code goes here
     	
     	try {
-    		Table table = tableMap.get(tableid);
+    		Table table = this.tableMap.get(tableid);
     		return table.getDbFile();
     	} catch (Exception e) {
     		throw new NoSuchElementException("No such thing exist, man");
@@ -158,7 +158,7 @@ public class Catalog {
     public String getPrimaryKey(int tableid) {
         // some code goes here
     	
-    	Table table = tableMap.getOrDefault(tableid, null);
+    	Table table = this.tableMap.getOrDefault(tableid, null);
     	
     	if (table == null){
     		throw new NoSuchElementException("This is not here");
@@ -168,26 +168,26 @@ public class Catalog {
 
     public Iterator<Integer> tableIdIterator() {
         
-    	Set<Integer> setKeys = tableMap.keySet();
+    	Set<Integer> setKeys = this.tableMap.keySet();
     	return setKeys.iterator();
     }
 
     public String getTableName(int id) {
     	
-        Table table = tableMap.getOrDefault(id, null);
+        Table table = this.tableMap.getOrDefault(id, null);
         
-        if (table != null) {
+        try {
         	return table.getName();
-        }
-        
-        else {
+        } catch (Exception e) {
         	throw new NoSuchElementException("No table with this id");
         }
+        
+        
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
-        tableMap.clear();
+        this.tableMap.clear();
     }
     
     /**

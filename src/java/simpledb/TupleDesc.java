@@ -42,8 +42,7 @@ public class TupleDesc implements Serializable {
      *        that are included in this TupleDesc
      * */
     public Iterator<TDItem> iterator() {
-        // some code goes here
-        return null;
+        return Arrays.asList(this.tdItems).iterator();
     }
 
     private static final long serialVersionUID = 1L;
@@ -71,6 +70,10 @@ public class TupleDesc implements Serializable {
     	tdItems = new TDItem[numTypes];
 
     	for (int i = 0; i < numTypes; i++) {
+    		
+    		if(fieldAr[i] == null){
+    			tdItems[i] = new TDItem(typeAr[i], "null");
+    		}
 
     		tdItems[i] = new TDItem(typeAr[i], fieldAr[i]);
     	}
@@ -176,6 +179,8 @@ public class TupleDesc implements Serializable {
 
         return foundIndex;
     }
+    
+    
 
     /**
      * @return The size (in bytes) of tuples corresponding to this TupleDesc.
