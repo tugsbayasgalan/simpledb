@@ -26,7 +26,7 @@ Those classes had specific specs, so there weren’t any important design decisi
 
 
 Exercise 5.
-Most important part of this exercise was to implement HeapFileIterator which is a part of interface DbFileIterator. My initial plan was to fetch all tuples using tableid, but I soon realized that it might make the iterator method too complex. Therefore, I decided to have a separate class for iterator for modularity. In addition, by reading the javadoc for DbFileIterator interface, I thought the best way was to use the given interface. 
+Most important part of this exercise was to implement HeapFileIterator which is a part of interface DbFileIterator. My initial plan was to fetch all tuples using tableid, but I soon realized that it might make the iterator method too complex. Therefore, I decided to have a separate class for iterator for modularity. In addition, by reading the javadoc for DbFileIterator interface, I thought the best way was to use the given interface. For HeapFile, I did random access to the file as suggested by the instruction.
 
 
 Exercise 6.

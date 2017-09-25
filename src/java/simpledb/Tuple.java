@@ -92,11 +92,11 @@ public class Tuple implements Serializable {
         // some code goes here
     	
     	if (i == -1 || i > this.fields.length - 1){
-    		// TODO maybe throw exception??
+    		
     		throw new NoSuchElementException("This index is invalid");
     	}
 
-        // TODO maybe exception ??
+        
     	return fields[i];
     }
 
