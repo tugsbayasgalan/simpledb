@@ -74,9 +74,10 @@ public class Tuple implements Serializable {
     public void setField(int i, Field f) {
 
     	if (i == -1 || i > this.fields.length - 1){
-    		// TODO maybe throw exception??
+    		
     		throw new NoSuchElementException("This index is invalid");
     	}
+    	
 
     	fields[i] = f;
     }

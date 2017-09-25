@@ -150,7 +150,7 @@ public class Catalog {
     		Table table = this.tableMap.get(tableid);
     		return table.getDbFile();
     	} catch (Exception e) {
-    		throw new NoSuchElementException("No such thing exist, man");
+    		throw new NoSuchElementException("No such thing exist");
     	}
         
     }
@@ -250,7 +250,7 @@ class Table {
 	
 	/**
 	 * 
-	 * This class is a datatype for database table inside the catalog
+	 * This class is an immutable ADT representing a specific table inside the Catalog
 	 * 
 	 */
 	
