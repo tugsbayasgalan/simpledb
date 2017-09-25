@@ -1,23 +1,40 @@
 Name: Tugsbayasgalan Manlaibaatar
-Collab: Wei Wu, William Wong
-
+Discussed With: Wei Wu, William Wong
 
 Exercise 1.
+In this exercise, I implemented Tuple.java and TupleDesc.java.
 
-Tuple.java - 
+Tuple.java - I decided to store fields in an array because array is easier to set or get values at given index as opposed to list in Java. In addition, whenever we try to access a field from the field array with wrong index (index can be outside of the length of array or negative number), it will throw exception. 
 
+TupleDesc.java - There wasn’t much to decide here since I just followed the constructor signature when I was declaring fields for the class. In the constructor, I made it so that whenever we see null inside the field names, we replace it with string “null” to avoid from null exceptions in SeqScan.java. And I am planning on improving the null handler in the next labs.
 
 Exercise 2.
+In this exercise, I implemented Catalog.java. 
 
+Catalog.java - To make the implementation more modular, I implemented an immutable ADT for a table in the catalog. Table ADT has only observer methods to avoid from any mutation from outside. In addition, I used hashMap to store the tables as the keys being the hashcode of file (as suggested in the JavaDoc) and values being the tables. This allows us to do look up much faster than array type of data structures. Since Catalog can be accessed from multiple threads, we have to use thread safe data structure instead of hashMap. One possible solution might be 
+ConcurrentHashMap. 
 
 Exercise 3. 
+In this exercise, I implemented BufferPool.java
 
-
+BufferPool.java - For the constructor of this class, I used numPages which represents the number of pages inside the bufferpool and bufferPool, a map that maps PageId with Page, which represents actual data. 
 
 Exercise 4.
+In this exercise, I implemented HeapPageId.java, RecordID.java, and HeapPage.java. 
+
+Those classes had specific specs, so there weren’t any important design decisions involved. The most tricky part was to use bit manipulation to get the correct bit in HeapPage.java. 
 
 
 Exercise 5.
+Most important part of this exercise was to implement HeapFileIterator which is a part of interface DbFileIterator. My initial plan was to fetch all tuples using tableid, but I soon realized that it might make the iterator method too complex. Therefore, I decided to have a separate class for iterator for modularity. In addition, by reading the javadoc for DbFileIterator interface, I thought the best way was to use the given interface. 
 
 
 Exercise 6.
+Implementing Iterator method for all implementation classes of the iterator interface came in handy in this exercise. Basically just calling .iterator() was enough since all the internal details of iterator implementations. Moreover, since dealing with null field names is handled inside TupleDesc, I didn’t have to add any edge cases in SeqScan. 
+
+
+
+General
+Time Spent: 6 ~ 8 hours
+Feedback: JavaDoc was bit too vague. Like there wasn’t any good instructions to handle edge cases. 
+Missing or Incomplete: None
