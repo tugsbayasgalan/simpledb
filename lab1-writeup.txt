@@ -1,6 +1,9 @@
 Name: Tugsbayasgalan Manlaibaatar
 Discussed With: Wei Wu, William Wong
 
+This lab is really fun because, in the end, I was able to understand the high level idea of designing databases. 
+Coding portions were not really tedious and were really fun. These lab consists of six exercises. 
+
 Exercise 1.
 In this exercise, I implemented Tuple.java and TupleDesc.java.
 
@@ -30,7 +33,7 @@ Most important part of this exercise was to implement HeapFileIterator which is 
 
 
 Exercise 6.
-Implementing Iterator method for all implementation classes of the iterator interface came in handy in this exercise. Basically just calling .iterator() was enough since all the internal details of iterator implementations. Moreover, since dealing with null field names is handled inside TupleDesc, I didn’t have to add any edge cases in SeqScan. 
+Implementing Iterator method for all implementation classes of the iterator interface came in handy in this exercise. Basically just calling .iterator() was enough since all the internal details of iterator implementations happened in the implementation classes. Moreover, since dealing with null field names is handled inside TupleDesc, I didn’t have to add any edge cases in SeqScan. 
 
 
 
