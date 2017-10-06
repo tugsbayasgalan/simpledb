@@ -36,7 +36,7 @@ public class BufferPool {
     
     private Map<PageId, Page> bufferPool;
     
-    private AtomicInteger currentNumPages;
+    private int currentNumPages;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -47,7 +47,7 @@ public class BufferPool {
         // some code goes here
     	this.numPages = numPages;
     	this.bufferPool = new HashMap<>();
-    	this.currentNumPages = new AtomicInteger(0);
+    	this.currentNumPages = 0;
     }
     
     public static int getPageSize() {
@@ -86,13 +86,13 @@ public class BufferPool {
 		// TODO maybe not exceptions ???
 		if (!bufferPool.containsKey(pid)) {
 			Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
-			if (currentNumPages.get() > this.numPages) {
+			if (currentNumPages > this.numPages) {
 
 				evictPage();
 			}
 
 			bufferPool.put(pid, page);
-			currentNumPages.incrementAndGet();
+			currentNumPages++;
 			return page;
 
 		}
@@ -228,7 +228,7 @@ public class BufferPool {
         // not necessary for lab1
     	if(bufferPool.containsKey(pid)){
     		bufferPool.remove(pid);
-    		currentNumPages.decrementAndGet();
+    		currentNumPages--;
     	}
     }
 
@@ -293,7 +293,7 @@ public class BufferPool {
     		}
     		bufferPool.remove(key);
 			
-			currentNumPages.decrementAndGet();
+			currentNumPages--;
     		
     	}
     	
