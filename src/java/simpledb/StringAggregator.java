@@ -1,11 +1,24 @@
 package simpledb;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Knows how to compute some aggregate over a set of StringFields.
  */
 public class StringAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
+    
+    private final int gbfield;
+    private final Type gbfieldType;
+    private final int afield;
+    private final Op what;
+    private final Map<Field, Integer>countMap = new HashMap<>();
+    
+    private static final StringField NO_GROUP_KEY = new StringField("no group key", 6);
 
     /**
      * Aggregate constructor
@@ -17,7 +30,16 @@ public class StringAggregator implements Aggregator {
      */
 
     public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
-        // some code goes here
+        
+    	
+    	this.gbfield = gbfield;
+    	this.gbfieldType = gbfieldtype;
+    	this.afield = afield;
+    	if (!what.equals(Op.COUNT)){
+    		throw new IllegalArgumentException("Only supports count for string");
+    	}
+    	
+    	this.what = what;
     }
 
     /**
@@ -25,7 +47,34 @@ public class StringAggregator implements Aggregator {
      * @param tup the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-        // some code goes here
+    	
+    	if (gbfield == NO_GROUPING){
+    		
+    		if (countMap.containsKey(NO_GROUP_KEY)){
+    			countMap.put(NO_GROUP_KEY, countMap.get(NO_GROUP_KEY) + 1);
+    		}
+    		
+    		else {
+    			countMap.put(NO_GROUP_KEY, 1);
+    		}
+    		
+    	}
+    	
+    	else {
+    		
+    		
+			IntField field = (IntField) tup.getField(gbfield);
+
+			if (countMap.containsKey(field)) {
+				countMap.put(field, countMap.get(field) + 1);
+			}
+
+			else {
+				countMap.put(field, 1);
+			}
+    		
+    	}
+        
     }
 
     /**
@@ -37,8 +86,52 @@ public class StringAggregator implements Aggregator {
      *   aggregate specified in the constructor.
      */
     public OpIterator iterator() {
-        // some code goes here
-        throw new UnsupportedOperationException("please implement me for lab2");
+    	
+    	List<Tuple> tuples = new ArrayList<>();
+        
+    	if (gbfield == NO_GROUPING) {
+    		
+    		TupleDesc td = new TupleDesc(new Type[]{Type.INT_TYPE});
+    		
+    		Tuple tuple = new Tuple(td);
+    		
+    		int value = countMap.get(NO_GROUP_KEY);
+    		
+    		tuple.setField(0, new IntField(value));
+    		
+    		tuples.add(tuple);
+    		
+    		return new TupleIterator(td, tuples);
+    		
+    	} else {
+    		
+    		Type[] types = new Type[2];
+    		
+    		types[0] = gbfieldType;
+    		
+    		types[1] = Type.INT_TYPE;
+    		
+    		TupleDesc td = new TupleDesc(types);
+    		
+    		for (Field field: countMap.keySet()){
+    			
+    			Tuple tuple = new Tuple(td);
+    			
+    			int value = countMap.get(field);
+    			
+    			tuple.setField(0, field);
+    			
+    			tuple.setField(1, new IntField(value));
+    			
+    			tuples.add(tuple);
+    			
+    			
+    		}
+    		
+    		return new TupleIterator(td, tuples);
+    	}
+    	
+    	
     }
 
 }

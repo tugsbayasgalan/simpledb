@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import simpledb.*;
 
 public class FilterTest extends FilterBase {
+	 
     @Override
     protected int applyPredicate(HeapFile table, TransactionId tid, Predicate predicate)
             throws DbException, TransactionAbortedException, IOException {

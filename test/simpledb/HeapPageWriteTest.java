@@ -53,11 +53,13 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
 
         // NOTE(ghuo): this nested loop existence check is slow, but it
         // shouldn't make a difference for n = 504 slots.
-
+        
         for (int i = 0; i < free; ++i) {
+        	
             Tuple addition = Utility.getHeapTuple(i, 2);
             page.insertTuple(addition);
-            assertEquals(free-i-1, page.getNumEmptySlots());
+            
+            assertEquals(free -i -1, page.getNumEmptySlots());
 
             // loop through the iterator to ensure that the tuple actually exists
             // on the page
@@ -79,6 +81,7 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
         // now, the page should be full.
         try {
             page.insertTuple(Utility.getHeapTuple(0, 2));
+            System.out.println(page.getNumEmptySlots());
             throw new Exception("page should be full; expected DbException");
         } catch (DbException e) {
             // explicitly ignored
@@ -110,9 +113,13 @@ public class HeapPageWriteTest extends SimpleDbTestBase {
 
         // now, delete them one-by-one from both the front and the end.
         int deleted = 0;
+        
         while (tuples.size() > 0) {
+        	
             page.deleteTuple(tuples.removeFirst());
+            
             page.deleteTuple(tuples.removeLast());
+            
             deleted += 2;
             assertEquals(free + deleted, page.getNumEmptySlots());
         }

@@ -38,6 +38,7 @@ public class HeapFileIterator implements DbFileIterator {
 
 	public Iterator<Tuple> getIterator(int pageNo) throws DbException, TransactionAbortedException {
 		try {
+			
 			HeapPage page = (HeapPage) getPage(pageNo);
 			return page.iterator();
 		} catch (Exception e) {
@@ -56,7 +57,10 @@ public class HeapFileIterator implements DbFileIterator {
 		}
 		else {
 			HeapPageId pId = new HeapPageId(tableId, pageNo);
+			
+			
 			Page page =  Database.getBufferPool().getPage(transId, pId, Permissions.READ_ONLY);
+			
 			return page;
 
 		}

@@ -10,6 +10,13 @@ import java.util.*;
 public class Aggregate extends Operator {
 
     private static final long serialVersionUID = 1L;
+    
+    private OpIterator child;
+    private final int afield;
+    private final int gfield;
+    private final Aggregator.Op aop;
+    private Aggregator aggregator;
+    private OpIterator aggregateIt;
 
     /**
      * Constructor.
@@ -30,7 +37,45 @@ public class Aggregate extends Operator {
      *            The aggregation operator to use
      */
     public Aggregate(OpIterator child, int afield, int gfield, Aggregator.Op aop) {
-	// some code goes here
+    	
+    	this.child = child;
+    	this.afield = afield;
+    	this.gfield = gfield;
+    	this.aop = aop;
+    	
+    	
+    	Type gfieldType;
+    	int gfieldModified;
+    	if (this.gfield == -1){
+    		
+    		gfieldModified = Aggregator.NO_GROUPING;
+    		
+    		gfieldType = Type.INT_TYPE;
+    	}
+    		
+    	else {
+    		gfieldType = child.getTupleDesc().getFieldType(gfield);
+    		gfieldModified = this.gfield;
+    	}
+
+		Type afieldType = child.getTupleDesc().getFieldType(afield);
+		
+		switch (afieldType) {
+		
+		case INT_TYPE:
+			this.aggregator = new IntegerAggregator(gfieldModified, gfieldType, afield, aop);
+			break;
+		case STRING_TYPE:
+			this.aggregator = new StringAggregator(gfieldModified, gfieldType, afield, aop);
+			break;
+		default:
+			throw new UnsupportedOperationException("unsupported operation");
+
+		}
+    		
+    		
+    	
+	
     }
 
     /**
@@ -39,8 +84,9 @@ public class Aggregate extends Operator {
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
-	// some code goes here
-	return -1;
+    	
+    	return gfield;
+	
     }
 
     /**
@@ -49,16 +95,26 @@ public class Aggregate extends Operator {
      *         null;
      * */
     public String groupFieldName() {
-	// some code goes here
-	return null;
+    	
+    	if(gfield == Aggregator.NO_GROUPING){
+    		
+    		return null;
+    		
+    	}
+    	else {
+    		return getTupleDesc().getFieldName(gfield);
+    	}
+    	
+    
+	
     }
 
     /**
      * @return the aggregate field
      * */
     public int aggregateField() {
-	// some code goes here
-	return -1;
+    	return afield;
+	
     }
 
     /**
@@ -66,25 +122,47 @@ public class Aggregate extends Operator {
      *         tuples
      * */
     public String aggregateFieldName() {
-	// some code goes here
-	return null;
+    	return child.getTupleDesc().getFieldName(afield);
+	
     }
 
     /**
      * @return return the aggregate operator
      * */
     public Aggregator.Op aggregateOp() {
-	// some code goes here
-	return null;
+    	
+    	return aop;
+	
     }
 
-    public static String nameOfAggregatorOp(Aggregator.Op aop) {
-	return aop.toString();
-    }
+	public static String nameOfAggregatorOp(Aggregator.Op aop) {
+		return aop.toString();
+	}
 
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
-	// some code goes here
+    	
+    	super.open();
+    	child.open();
+    	
+    	while (child.hasNext()){
+    		aggregator.mergeTupleIntoGroup(child.next());
+    	}
+    	child.close();
+    	
+    	OpIterator iterator = (OpIterator) aggregator.iterator();
+    	iterator.open();
+    	
+    	List<Tuple> tuples = new ArrayList<Tuple>();
+    	
+    	while(iterator.hasNext()){
+    		tuples.add(iterator.next());
+    	}
+    	
+    	this.aggregateIt = new TupleIterator(getTupleDesc(), tuples);
+    	aggregateIt.open();
+    
+	
     }
 
     /**
@@ -95,12 +173,22 @@ public class Aggregate extends Operator {
      * aggregate. Should return null if there are no more tuples.
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-	// some code goes here
-	return null;
+    	
+    	if(aggregateIt.hasNext()){
+    	   return aggregateIt.next();
+    	}
+    	
+    	else {
+    		return null;
+    	}
+    	
+	
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-	// some code goes here
+    	
+    	aggregateIt.rewind();
+	
     }
 
     /**
@@ -115,23 +203,82 @@ public class Aggregate extends Operator {
      * iterator.
      */
     public TupleDesc getTupleDesc() {
-	// some code goes here
-	return null;
+    	
+    	String value = aop.toString() + "(" + child.getTupleDesc().getFieldName(afield) + ")";
+    	
+    	if (gfield == Aggregator.NO_GROUPING){
+    		
+    		return new TupleDesc(new Type[]{Type.INT_TYPE}, new String[]{value});
+    	
+    	} else {
+    		
+    		Type[] types = new Type[2];
+    		
+    		types[0] = child.getTupleDesc().getFieldType(gfield);
+    		
+    		types[1] = Type.INT_TYPE;
+    		
+    		String[] strings = new String[2];
+    		
+    		strings[0] = child.getTupleDesc().getFieldName(gfield);
+    		
+    		strings[1] = value;
+    		
+    		return new TupleDesc(types, strings);
+    		
+    	}
+	
     }
 
     public void close() {
 	// some code goes here
+    	super.close();
+    	if(aggregateIt != null){
+    		aggregateIt.close();
+    	}
     }
 
     @Override
     public OpIterator[] getChildren() {
-	// some code goes here
-	return null;
+	
+    	return new OpIterator[]{child};
+    	
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
-	// some code goes here
+    	
+    	this.child = children[0];
+    	
+    	Type gfieldType;
+    	int gfieldModified;
+    	if (this.gfield == -1){
+    		gfieldType = Type.INT_TYPE;
+    		gfieldModified = Aggregator.NO_GROUPING;
+    	}
+    		
+    	else {
+    		gfieldType = child.getTupleDesc().getFieldType(gfield);
+    		gfieldModified = this.gfield;
+    	}
+
+		Type afieldType = child.getTupleDesc().getFieldType(afield);
+		
+		switch (afieldType) {
+		
+		case INT_TYPE:
+			this.aggregator = new IntegerAggregator(gfieldModified, gfieldType, afield, aop);
+			break;
+		case STRING_TYPE:
+			this.aggregator = new StringAggregator(gfieldModified, gfieldType, afield, aop);
+			break;
+		default:
+			throw new UnsupportedOperationException("unsupported operation");
+
+		}
+    	
+    	
+	
     }
     
 }

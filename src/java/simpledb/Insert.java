@@ -1,5 +1,7 @@
 package simpledb;
 
+import java.io.IOException;
+
 /**
  * Inserts tuples read from the child operator into the tableId specified in the
  * constructor
@@ -7,6 +9,12 @@ package simpledb;
 public class Insert extends Operator {
 
     private static final long serialVersionUID = 1L;
+    
+    private final TransactionId transactionId;
+    private OpIterator child;
+    private final int tableId;
+    
+    private boolean inserted;
 
     /**
      * Constructor.
@@ -23,24 +31,34 @@ public class Insert extends Operator {
      */
     public Insert(TransactionId t, OpIterator child, int tableId)
             throws DbException {
-        // some code goes here
+        this.transactionId = t;
+        this.child = child;
+        this.tableId = tableId;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        
+    	return new TupleDesc(new Type[]{Type.INT_TYPE});
     }
 
     public void open() throws DbException, TransactionAbortedException {
         // some code goes here
+    	super.open();
+    	child.open();
+    	
     }
 
     public void close() {
         // some code goes here
+    	super.close();
+    	child.close();
+    	
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+    	close();
+    	open();
     }
 
     /**
@@ -58,17 +76,63 @@ public class Insert extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+    	
+    	
+    	// first check if it inserted before
+    	if (inserted){
+    		return null;
+    	}
+    	
+        
+    	
+    	int count = 0;
+    	while(child.hasNext()){
+    		Tuple t = child.next();
+    		
+    		try {
+				Database.getBufferPool().insertTuple(transactionId, tableId, t);
+				count++;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    	
+    	
+    	
+    	
+    	Type[] type = new Type[]{Type.INT_TYPE};
+    	
+    	TupleDesc td = new TupleDesc(type);
+    	
+    	Tuple tuple = new Tuple(td);
+    	
+    	IntField intField = new IntField(count);
+    	
+    	tuple.setField(0, intField);
+    	
+    	this.inserted = true;
+    	
+    	return tuple;
+    	
+        
     }
 
     @Override
     public OpIterator[] getChildren() {
         // some code goes here
-        return null;
+        OpIterator[] result = new OpIterator[1];
+        result[0] = child;
+        return result;
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
         // some code goes here
+    	
+    	
+    	
+    	
+    	this.child = children[0];
     }
 }
