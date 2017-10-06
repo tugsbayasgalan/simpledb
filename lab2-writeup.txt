@@ -1,0 +1,47 @@
+Name: Tugbayasgalan Manlaibaatar
+Collab: William Wong
+
+
+Exercise 1:
+
+This part was relatively straightforward, so there wasn't really much of a design decision.
+I used nested loops for Join.java since it was the easiest way to do it. When doing this,
+I keep track of the first child iterator to loop through the second child. Whenever we call 
+next() on our our first child iterator, we rewind the second iterator to make it start from 
+beginning.
+
+Exercise 2: 
+
+For Aggregate.java, I maintained aggregator's iterator to make fetchNext() simpler. I first 
+initialized aggregator and populated it with child's tuples using mergeTupleIntoGroup() method.
+Then I get the aggregator's iterator by using iterator() method of aggregator.
+
+Exercise 3:
+
+In this part, only hard was actually just doing bit hack. 
+
+Exercise 4:
+
+Just followed the spec.
+
+Exercise 5:
+
+EvictPage policy:
+
+Whenever buffer pool exceeds its' maximum size, we just flush random page using the property of 
+of Java hashmap. This is not the best strategy, but it works for now. We can improve in the next
+labs. I also keep track of number of pages inside the map to make sure I know when it exceeds
+the size of the map. Even tough I just used integer variable to keep track of it, I think
+it is better to use AtomicInteger in the future. 
+
+General: I didn't change any API and I completed every part needed for the lab and I took one day
+extension. 
+
+Feedback: I spent around 20 hours on this lab. I think the most confusing part was just
+to figure out the API. Otherwise, it was really fun lab.
+
+
+
+
+
+
