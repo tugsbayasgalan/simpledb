@@ -179,9 +179,10 @@ public class JoinOptimizer {
     			return Math.max(card1, card2);
     		}
     	
-    	
+    	case NOT_EQUALS:
+    		return (int)0.3*card1*card2;
     	default:
-    		return card1*card2;
+    		return (int)card1*card2;
     		
     	
     	}

@@ -1,0 +1,46 @@
+Name: Tugsbayasgalan Manlaibaatar
+Collab: William Wong
+Time Spent: 8 hours
+
+
+Changes made to API:
+
+I didn't make any changes to the API
+
+
+Exercise 1:
+
+I used buckets array to keep track buckets with elements inside. Therefore, it
+was easier to implement the histogram method with min/max without any trouble.
+
+
+Exercise 2:
+
+This method was also pretty straighforward in that I just used mins, maxs maps 
+to keep track of min and max for each field in the table. By doing so, I was able 
+to create IntHistogram for each integer type fields. I scanned through the entire tuples
+in the file twice. First one was to keep track of min and max. Second one was to actually
+insert values to the histograms. 
+
+Exercise 3:
+
+I pretty much followed the instruction.
+
+
+Exercise 4:
+
+Same as the algorithm given. I used PlanCache as our plan storage.
+
+Bonus Points:
+
+Didn't do any of the bonus credits.
+
+Missing Code:
+
+I did everything neccesary for lab 3.
+
+Most Confusing:
+
+TableStats test was bit hard to understand. For example 1.0/32 was hard to understand
+and specs for the number of buckets were bit ambiguous. It took me a while to understand
+that bucket number should be min of default and max - min + 1.
