@@ -3,7 +3,7 @@ package simpledb;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -146,6 +146,7 @@ public class TableStats {
             			}
             			
             		}
+            		
             		
             		
             		

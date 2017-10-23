@@ -110,16 +110,16 @@ public class IntHistogram {
     			}
     			
     		case LESS_THAN_OR_EQ:
-    			if (v <= min){
+    			if (v + 1<= min){
     				return 0.0;
     			}
     			
-    			else if (v >= max){
+    			else if (v + 1>= max){
     				return 1.0;
     			}
     			
     			else {
-    				int index = getIndex(v);
+    				int index = getIndex(v+1);
     				
     				double elementCount = 0;
     				
@@ -156,14 +156,11 @@ public class IntHistogram {
 
     				
     				int index = getIndex(v);
-    				//System.out.println(index);
     				
     				double elementCount = buckets[index];
-    				//System.out.println(width);
+  
     				
-    				//System.out.println(numTuples);
-    				
-    				return (((double) elementCount)/((double) width))/((double) numTuples);
+    				return (elementCount/width)/(numTuples);
     				
     				
     			}

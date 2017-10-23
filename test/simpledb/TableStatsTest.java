@@ -47,7 +47,7 @@ public class TableStatsTest extends SimpleDbTestBase {
 	 *   +linear in IO_COST when numPages is constant
 	 *   +quadratic when IO_COST and numPages increase linearly.
 	 */
-	public void estimateScanCostTest() throws IOException, DbException, TransactionAbortedException {
+	@Test public void estimateScanCostTest() throws IOException, DbException, TransactionAbortedException {
 		Object[] ret;
 		int[] ioCosts = new int[20];
 		int[] pageNums = new int[ioCosts.length];
@@ -89,7 +89,7 @@ public class TableStatsTest extends SimpleDbTestBase {
 	/**
 	 * Verify the table-cardinality estimates based on a selectivity estimate
 	 */
-	public void estimateTableCardinalityTest() {
+	@Test public void estimateTableCardinalityTest() {
 		TableStats s = new TableStats(this.tableId, IO_COST);
 		
 		// Try a random selectivity
