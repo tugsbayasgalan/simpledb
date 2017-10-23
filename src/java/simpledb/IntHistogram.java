@@ -1,9 +1,18 @@
 package simpledb;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /** A class to represent a fixed-width histogram over a single integer-based field.
  */
 public class IntHistogram {
 
+	
+	private int numTuples = 0;
+	private final int min;
+	private final int max;
+	private final int[] buckets;
+	private final double width;
     /**
      * Create a new IntHistogram.
      * 
@@ -20,8 +29,18 @@ public class IntHistogram {
      * @param min The minimum integer value that will ever be passed to this class for histogramming
      * @param max The maximum integer value that will ever be passed to this class for histogramming
      */
+	
+	
     public IntHistogram(int buckets, int min, int max) {
-    	// some code goes here
+    	
+    	
+    	this.min = min;
+    	this.max = max + 1;
+    	this.buckets = new int[Math.min(max - min + 1, buckets)];
+    	
+    	this.width = (max - min + 1.0)/this.buckets.length;
+    	
+
     }
 
     /**
@@ -29,10 +48,27 @@ public class IntHistogram {
      * @param v Value to add to the histogram
      */
     public void addValue(int v) {
-    	// some code goes here
+    	
+    	if (v >= min && v < max){
+    		int index = getIndex(v);
+    		//System.out.println(index);
+    		buckets[index]++;
+    		numTuples++;
+    	}
+    	
     }
 
-    /**
+    private int getIndex(int v) {
+    	
+    	if (v < min || v >= max){
+    		throw new IllegalArgumentException("This integer is out of range");
+    	}
+    	
+    	return (int) ((v - min)/width);
+		
+	}
+
+	/**
      * Estimate the selectivity of a particular predicate and operand on this table.
      * 
      * For example, if "op" is "GREATER_THAN" and "v" is 5, 
@@ -43,9 +79,108 @@ public class IntHistogram {
      * @return Predicted selectivity of this particular operator and value
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
+  
 
-    	// some code goes here
-        return -1.0;
+    	switch (op){
+    		case LESS_THAN:
+    			if (v <= min){
+    				return 0.0;
+    			}
+    			
+    			else if (v >= max){
+    				return 1.0;
+    			}
+    			
+    			else {
+    				int index = getIndex(v);
+    				
+    				double elementCount = 0;
+    				
+    				for (int i = 0; i < index; i++){
+    					elementCount += buckets[i];
+    				}
+    				
+    				double offset = v - min - index*width;
+    				
+    				elementCount += (offset/width)*buckets[index];
+    				
+    				return elementCount/numTuples;
+    				
+    				
+    			}
+    			
+    		case LESS_THAN_OR_EQ:
+    			if (v <= min){
+    				return 0.0;
+    			}
+    			
+    			else if (v >= max){
+    				return 1.0;
+    			}
+    			
+    			else {
+    				int index = getIndex(v);
+    				
+    				double elementCount = 0;
+    				
+    				for (int i = 0; i < index; i++){
+    					elementCount += buckets[i];
+    				}
+    				
+    				double offset = v - min - index*width + 1;
+    				
+    				System.out.println(index);
+    				elementCount += (offset/width)*buckets[index];
+    				
+    				
+    				return elementCount/numTuples;
+    				
+    				
+    			}
+    			
+    		case GREATER_THAN:
+    			return 1 - estimateSelectivity(Predicate.Op.LESS_THAN_OR_EQ, v);
+    		case GREATER_THAN_OR_EQ:
+    			return 1 - estimateSelectivity(Predicate.Op.LESS_THAN, v);
+    		case EQUALS:
+       			if (v <= min){
+    				return 0.0;
+    			}
+    			
+    			else if (v >= max){
+    		
+    				return 0.0;
+    			}
+    			
+    			else {
+
+    				
+    				int index = getIndex(v);
+    				//System.out.println(index);
+    				
+    				double elementCount = buckets[index];
+    				//System.out.println(width);
+    				
+    				//System.out.println(numTuples);
+    				
+    				return (((double) elementCount)/((double) width))/((double) numTuples);
+    				
+    				
+    			}
+
+    			
+    		case NOT_EQUALS:
+    			return 1 - estimateSelectivity(Predicate.Op.EQUALS, v);
+    		case LIKE:
+    			return estimateSelectivity(Predicate.Op.EQUALS, v);
+    		default:
+    			throw new RuntimeException("Shouldn't come here");
+    		
+    		
+    	
+    	}
+    	
+
     }
     
     /**
@@ -66,7 +201,15 @@ public class IntHistogram {
      * @return A string describing this histogram, for debugging purposes
      */
     public String toString() {
-        // some code goes here
-        return null;
+    	
+    	String result = "";
+        for(int i = 0; i < buckets.length; i++){
+        	
+        	result += "(Bucket No " + i + " with " + buckets[i] + ") ";
+        	
+        	
+        }
+        
+        return result;
     }
 }

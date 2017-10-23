@@ -73,6 +73,7 @@ public class IntHistogramTest {
 		
 		// This really should return "1.0"; but,
 		// be conservative in case of alternate implementations
+		
 		Assert.assertTrue(h.estimateSelectivity(Op.EQUALS, 3) > 0.8);
 		Assert.assertTrue(h.estimateSelectivity(Op.EQUALS, 8) < 0.001);
 	}

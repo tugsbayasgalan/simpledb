@@ -5,6 +5,8 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.*;
 
+import simpledb.Predicate.Op;
+
 /**
  * The JoinOptimizer class is responsible for ordering a series of joins
  * optimally, and for selecting the best instantiation of a join for a given
@@ -111,7 +113,7 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-            return -1.0;
+            return cost1 + card1*cost2 + card1*card2;
         }
     }
 
@@ -156,7 +158,22 @@ public class JoinOptimizer {
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
         int card = 1;
-        // some code goes here
+        
+        if(!joinOp.equals(Op.EQUALS)){
+        	card = (int)card1*card2*(3/10);
+        	
+        }
+        else if (t1pkey){
+        	card = card2;
+        }
+        
+        else if(t2pkey){
+        	card = card1;
+        }
+        
+        else {
+        	card = Math.max(card1, card2);
+        }
         return card <= 0 ? 1 : card;
     }
 
@@ -218,10 +235,63 @@ public class JoinOptimizer {
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
         //Not necessary for labs 1--3
+    	
+    	for (LogicalJoinNode j: joins){
+    		
+    		boolean statsCheck = !stats.containsKey(j.t1Alias) || !stats.containsKey(j.t2Alias);
+    		boolean filterCheck = !filterSelectivities.containsKey(j.t1Alias) || !filterSelectivities.containsKey(j.t2Alias);
+    		if (statsCheck || filterCheck){
+    			throw new ParsingException("Missing tables");
+    		}
+    	}
+    	
+    	PlanCache pc = new PlanCache();
+    	
+    	for (int i = 0; i <= joins.size(); i++){
+    		
+    		Set<Set<LogicalJoinNode>>subsets = enumerateSubsets(joins, i);
+    		
+    		
+    		for (Set<LogicalJoinNode> subset: subsets){
+    			CostCard bestPlan = null;
+    			for (LogicalJoinNode node: subset){
+    				
+    				double cost = Double.POSITIVE_INFINITY;
+    				
+    				if (bestPlan != null) {
+    					cost = bestPlan.cost;
+    				}
+    				CostCard current = computeCostAndCardOfSubplan(stats, filterSelectivities, node, subset, cost, pc);
+    				
+    				if (current == null){
+    					continue;
+    				}
 
-        // some code goes here
-        //Replace the following
-        return joins;
+    				
+    				else if (bestPlan == null || current.cost < bestPlan.cost){
+    					bestPlan = current;
+    				}
+    			}
+    			
+    			if (bestPlan != null){
+    				pc.addPlan(subset, bestPlan.cost, bestPlan.card, bestPlan.plan);
+    			}
+    			
+    		}
+    		
+    		
+    		
+    		
+    	}
+    	
+    	if (explain){
+
+			printJoins(joins, pc, stats, filterSelectivities);
+		}
+    	
+    	return pc.getOrder(new HashSet<>(joins));
+
+
     }
 
     // ===================== Private Methods =================================
