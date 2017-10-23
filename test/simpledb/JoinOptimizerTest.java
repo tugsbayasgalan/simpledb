@@ -524,7 +524,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
      * Test a join ordering with an inequality, to make sure the inequality gets
      * put as the outermost join
      */
-    @Test 
+    @Test
     public void nonequalityOrderJoinsTest() throws IOException, DbException,
             TransactionAbortedException, ParsingException {
         final int IO_COST = 103;
@@ -611,15 +611,17 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 
         // Set the last boolean here to 'true' in order to have orderJoins()
         // print out its logic
-        result = j.orderJoins(stats, filterSelectivities, true);
+        
+        result = j.orderJoins(stats, filterSelectivities, false);
+        
+        
 
         // If you're only re-ordering the join nodes,
         // you shouldn't end up with more than you started with
         Assert.assertEquals(result.size(), nodes.size());
 
         // Make sure that "a" is the outermost table in the join
-        System.out.println("THis is the result");
-        System.out.println(result.get(result.size() - 1));
+        
         Assert.assertTrue(result.get(result.size() - 1).t2Alias.equals("a")
                 || result.get(result.size() - 1).t1Alias.equals("a"));
     }

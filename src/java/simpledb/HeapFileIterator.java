@@ -76,18 +76,25 @@ public class HeapFileIterator implements DbFileIterator {
 		}
 
 		if (!this.curIterator.hasNext()){
+			
+			
 
 			if (this.curPageNo < numPages - 1){
+				
 				curPageNo++;
 				curIterator = getIterator(curPageNo);
-				return curIterator.hasNext();
+				
+				boolean t =  curIterator.hasNext();
+				
+				return t;
 			}
 
 			else {
+				
 				return false;
 			}
 		}
-
+        
 		return curIterator.hasNext();
 
 
@@ -111,10 +118,15 @@ public class HeapFileIterator implements DbFileIterator {
 
 	@Override
 	public void rewind() throws DbException, TransactionAbortedException {
-		if (openStatus) {
+		
+		if (this.openStatus) {
+			
 			this.curPageNo = 0;
 			this.curIterator = getIterator(curPageNo);
+		
+			
 		}
+			
 
 	}
 

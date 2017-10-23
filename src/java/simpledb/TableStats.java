@@ -153,7 +153,7 @@ public class TableStats {
             	}
     			
     		} finally {
-    			iterator.close();
+    			iterator.rewind();
     		}
 
     		
@@ -168,12 +168,14 @@ public class TableStats {
         
         	}
     		
-    		iterator.rewind();
+    		
     		
 			try {
-				iterator.open();
+				
+				
 				while (iterator.hasNext()) {
 					Tuple tuple = iterator.next();
+					
 
 					for (Integer key : intMap.keySet()) {
 
@@ -187,6 +189,8 @@ public class TableStats {
 
 					}
 				}
+				
+				
 			} finally {
 				iterator.close();
 			}

@@ -49,20 +49,15 @@ public class IntHistogram {
      */
     public void addValue(int v) {
     	
-    	if (v >= min && v < max){
-    		int index = getIndex(v);
-    		//System.out.println(index);
-    		buckets[index]++;
-    		numTuples++;
-    	}
+		int index = getIndex(v);
+
+		buckets[index]++;
+		numTuples++;
+    	
     	
     }
 
     private int getIndex(int v) {
-    	
-    	if (v < min || v >= max){
-    		throw new IllegalArgumentException("This integer is out of range");
-    	}
     	
     	return (int) ((v - min)/width);
 		
@@ -78,107 +73,95 @@ public class IntHistogram {
      * @param v Value
      * @return Predicted selectivity of this particular operator and value
      */
-    public double estimateSelectivity(Predicate.Op op, int v) {
-  
+	public double estimateSelectivity(Predicate.Op op, int v) {
 
-    	switch (op){
-    		case LESS_THAN:
-    			if (v <= min){
-    				return 0.0;
-    			}
-    			
-    			else if (v >= max){
-    				return 1.0;
-    			}
-    			
-    			else {
-    				int index = getIndex(v);
-    				
-    				double elementCount = 0;
-    				
-    				for (int i = 0; i < index; i++){
-    					elementCount += buckets[i];
-    				}
-    				
-    				double offset = v - min - index*width;
-    				
-    				elementCount += (offset/width)*buckets[index];
-    				
-    				return elementCount/numTuples;
-    				
-    				
-    			}
-    			
-    		case LESS_THAN_OR_EQ:
-    			if (v + 1<= min){
-    				return 0.0;
-    			}
-    			
-    			else if (v + 1>= max){
-    				return 1.0;
-    			}
-    			
-    			else {
-    				int index = getIndex(v+1);
-    				
-    				double elementCount = 0;
-    				
-    				for (int i = 0; i < index; i++){
-    					elementCount += buckets[i];
-    				}
-    				
-    				double offset = v - min - index*width + 1;
-    				
-    				System.out.println(index);
-    				elementCount += (offset/width)*buckets[index];
-    				
-    				
-    				return elementCount/numTuples;
-    				
-    				
-    			}
-    			
-    		case GREATER_THAN:
-    			return 1 - estimateSelectivity(Predicate.Op.LESS_THAN_OR_EQ, v);
-    		case GREATER_THAN_OR_EQ:
-    			return 1 - estimateSelectivity(Predicate.Op.LESS_THAN, v);
-    		case EQUALS:
-       			if (v <= min){
-    				return 0.0;
-    			}
-    			
-    			else if (v >= max){
-    		
-    				return 0.0;
-    			}
-    			
-    			else {
+		switch (op) {
+		case LESS_THAN:
+			if (v <= min) {
+				return 0.0;
+			}
 
-    				
-    				int index = getIndex(v);
-    				
-    				double elementCount = buckets[index];
-  
-    				
-    				return (elementCount/width)/(numTuples);
-    				
-    				
-    			}
+			else if (v >= max) {
+				return 1.0;
+			}
 
-    			
-    		case NOT_EQUALS:
-    			return 1 - estimateSelectivity(Predicate.Op.EQUALS, v);
-    		case LIKE:
-    			return estimateSelectivity(Predicate.Op.EQUALS, v);
-    		default:
-    			throw new RuntimeException("Shouldn't come here");
-    		
-    		
-    	
-    	}
-    	
+			else {
+				int index = getIndex(v);
 
-    }
+				double elementCount = 0;
+
+				for (int i = 0; i < index; i++) {
+					elementCount += buckets[i];
+				}
+
+				double offset = v - min - index * width;
+
+				elementCount += (offset / width) * buckets[index];
+
+				return elementCount / numTuples;
+
+			}
+
+		case LESS_THAN_OR_EQ:
+			if (v + 1 <= min) {
+				return 0.0;
+			}
+
+			else if (v + 1 >= max) {
+				return 1.0;
+			}
+
+			else {
+				int index = getIndex(v + 1);
+
+				double elementCount = 0;
+
+				for (int i = 0; i < index; i++) {
+					elementCount += buckets[i];
+				}
+
+				double offset = v - min - index * width + 1;
+
+				elementCount += (offset / width) * buckets[index];
+
+				return elementCount / numTuples;
+
+			}
+
+		case GREATER_THAN:
+			return 1 - estimateSelectivity(Predicate.Op.LESS_THAN_OR_EQ, v);
+		case GREATER_THAN_OR_EQ:
+			return 1 - estimateSelectivity(Predicate.Op.LESS_THAN, v);
+		case EQUALS:
+			if (v <= min) {
+				return 0.0;
+			}
+
+			else if (v >= max) {
+
+				return 0.0;
+			}
+
+			else {
+
+				int index = getIndex(v);
+
+				double elementCount = buckets[index];
+
+				return (elementCount / width) / (numTuples);
+
+			}
+
+		case NOT_EQUALS:
+			return 1 - estimateSelectivity(Predicate.Op.EQUALS, v);
+		case LIKE:
+			return estimateSelectivity(Predicate.Op.EQUALS, v);
+		default:
+			throw new RuntimeException("Shouldn't come here");
+
+		}
+
+	}
     
     /**
      * @return

@@ -139,6 +139,7 @@ public class HeapFile implements DbFile {
         int pageSize = BufferPool.getPageSize();
 
         int numPages = (int) Math.ceil(this.getFile().length() * 1.0/ pageSize);
+        
 
         return numPages;
     }

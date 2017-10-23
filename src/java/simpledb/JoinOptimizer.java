@@ -157,24 +157,37 @@ public class JoinOptimizer {
             String field2PureName, int card1, int card2, boolean t1pkey,
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
-        int card = 1;
+    	
+    	
+    	
+    	switch(joinOp) {
+    	
+    	case EQUALS:
+    		
+    		
+    		if(t1pkey){
+    			return card2;
+    			
+    		}
+    		
+    		else if(t2pkey){
+    			return card1;
+    			
+    		}
+    		
+    		else {
+    			return Math.max(card1, card2);
+    		}
+    	
+    	
+    	default:
+    		return card1*card2;
+    		
+    	
+    	}
+    	
+    	
         
-        if(!joinOp.equals(Op.EQUALS)){
-        	card = (int)card1*card2*(3/10);
-        	
-        }
-        else if (t1pkey){
-        	card = card2;
-        }
-        
-        else if(t2pkey){
-        	card = card1;
-        }
-        
-        else {
-        	card = Math.max(card1, card2);
-        }
-        return card <= 0 ? 1 : card;
     }
 
     /**
@@ -247,37 +260,31 @@ public class JoinOptimizer {
     	
     	PlanCache pc = new PlanCache();
     	
-    	for (int i = 0; i <= joins.size(); i++){
+    	for (int i = 1; i <= joins.size(); i++){
     		
     		Set<Set<LogicalJoinNode>>subsets = enumerateSubsets(joins, i);
     		
     		
     		for (Set<LogicalJoinNode> subset: subsets){
     			CostCard bestPlan = null;
+    			double bestCost = Double.MAX_VALUE;
+    			
     			for (LogicalJoinNode node: subset){
     				
-    				double cost = Double.POSITIVE_INFINITY;
+    				CostCard current = computeCostAndCardOfSubplan(stats, filterSelectivities, node, subset, bestCost, pc);
     				
-    				if (bestPlan != null) {
-    					cost = bestPlan.cost;
-    				}
-    				CostCard current = computeCostAndCardOfSubplan(stats, filterSelectivities, node, subset, cost, pc);
-    				
-    				if (current == null){
-    					continue;
-    				}
-
-    				
-    				else if (bestPlan == null || current.cost < bestPlan.cost){
+    				if (current != null && current.cost < bestCost ){
     					bestPlan = current;
+    					bestCost = current.cost;
     				}
     			}
     			
     			if (bestPlan != null){
-    				pc.addPlan(subset, bestPlan.cost, bestPlan.card, bestPlan.plan);
+    				pc.addPlan(subset, bestCost, bestPlan.card, bestPlan.plan);
     			}
     			
     		}
+    		
     		
     		
     		
@@ -288,7 +295,7 @@ public class JoinOptimizer {
 
 			printJoins(joins, pc, stats, filterSelectivities);
 		}
-    	
+
     	return pc.getOrder(new HashSet<>(joins));
 
 
