@@ -36,7 +36,9 @@ public class BufferPool {
     
     private Map<PageId, Page> bufferPool;
     
-    private int currentNumPages;
+    private AtomicInteger currentNumPages;
+    
+    private final LockManager lockManager;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -47,7 +49,10 @@ public class BufferPool {
         // some code goes here
     	this.numPages = numPages;
     	this.bufferPool = new HashMap<>();
-    	this.currentNumPages = 0;
+    	this.currentNumPages = new AtomicInteger(0);
+    	this.lockManager = new LockManager();
+    			
+    			
     }
     
     public static int getPageSize() {
@@ -82,17 +87,17 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
     	
-    	
+    	    lockManager.acquireLock(tid, pid, perm);
 		// TODO maybe not exceptions ???
 		if (!bufferPool.containsKey(pid)) {
 			Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
-			if (currentNumPages > this.numPages) {
+			if (currentNumPages.intValue() > this.numPages) {
 
 				evictPage();
 			}
 
 			bufferPool.put(pid, page);
-			currentNumPages++;
+			currentNumPages.incrementAndGet();
 			return page;
 
 		}
@@ -114,6 +119,10 @@ public class BufferPool {
     public  void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2
+    	    lockManager.releasePage(tid, pid);
+    	
+    	
+    	
     }
 
     /**
@@ -124,12 +133,17 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+    	
+    	
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
     public boolean holdsLock(TransactionId tid, PageId p) {
         // some code goes here
         // not necessary for lab1|lab2
+        if (lockManager.holdsLock(tid, p)) {
+        		return true;
+        }
         return false;
     }
 
@@ -189,20 +203,19 @@ public class BufferPool {
      * @param tid the transaction deleting the tuple.
      * @param t the tuple to delete
      */
-    public  void deleteTuple(TransactionId tid, Tuple t)
-        throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
-    	
-    	DbFile file = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
-    	
-    	ArrayList<Page> pages = file.deleteTuple(tid, t);
-    	
-    	for (Page page: pages){
-    		page.markDirty(false, tid);
-    		bufferPool.put(page.getId(), page);
-    	}
-    }
+	public void deleteTuple(TransactionId tid, Tuple t) throws DbException, IOException, TransactionAbortedException {
+		// some code goes here
+		// not necessary for lab1
+
+		DbFile file = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+
+		ArrayList<Page> pages = file.deleteTuple(tid, t);
+
+		for (Page page : pages) {
+			page.markDirty(false, tid);
+			bufferPool.put(page.getId(), page);
+		}
+	}
 
     /**
      * Flush all dirty pages to disk.
@@ -228,7 +241,7 @@ public class BufferPool {
         // not necessary for lab1
     	if(bufferPool.containsKey(pid)){
     		bufferPool.remove(pid);
-    		currentNumPages--;
+    		currentNumPages.decrementAndGet();
     	}
     }
 
@@ -293,7 +306,7 @@ public class BufferPool {
     		}
     		bufferPool.remove(key);
 			
-			currentNumPages--;
+			currentNumPages.decrementAndGet();
     		
     	}
     	
