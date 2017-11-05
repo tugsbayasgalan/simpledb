@@ -141,10 +141,7 @@ public class BufferPool {
     public boolean holdsLock(TransactionId tid, PageId p) {
         // some code goes here
         // not necessary for lab1|lab2
-        if (lockManager.holdsLock(tid, p)) {
-        		return true;
-        }
-        return false;
+        return lockManager.holdsLock(tid, p);
     }
 
     /**
