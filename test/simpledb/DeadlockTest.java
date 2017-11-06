@@ -72,7 +72,7 @@ public class DeadlockTest extends TestUtil.CreateHeapFile {
    * t1 acquires p0.read; t2 acquires p1.read; t1 attempts p1.write; t2
    * attempts p0.write. Rinse and repeat.
    */
-  public void testReadWriteDeadlock() throws Exception {
+  @Test public void testReadWriteDeadlock() throws Exception {
     System.out.println("testReadWriteDeadlock constructing deadlock:");
 
     LockGrabber lg1Read = startGrabber(tid1, p0, Permissions.READ_ONLY);

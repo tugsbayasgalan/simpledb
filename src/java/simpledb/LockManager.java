@@ -40,13 +40,13 @@ public class LockManager {
 		
 	}
 	
-	public boolean acquireLock(TransactionId tid, PageId pid, Permissions perm) throws DbException {
+	public synchronized boolean acquireLock(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException {
 		long start = System.currentTimeMillis();
 		if (perm.equals(Permissions.READ_ONLY)) {
 			
 			while(!acquireReadLock(tid, pid)) {
 				try {
-					Thread.sleep(10);
+					Thread.sleep(20);
 				} catch (Exception e){
 					e.printStackTrace();
 					System.out.println("Error occured while waiting");
@@ -54,7 +54,7 @@ public class LockManager {
 				
 				long current = System.currentTimeMillis();
 				if (current - start > 5000) {
-					throw new DbException("time out");
+					throw new TransactionAbortedException();
 				}
 				
 			}
@@ -67,7 +67,7 @@ public class LockManager {
 			
 			while(!acquireReadWriteLock(tid, pid)) {
 				try {
-					Thread.sleep(10);
+					Thread.sleep(20);
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.out.println("Error occured while waiting");
@@ -75,7 +75,7 @@ public class LockManager {
 				
 				long current = System.currentTimeMillis();
 				if (current - start > 5000) {
-					throw new DbException("time out");
+					throw new TransactionAbortedException();
 				}
 			}
 			return true;
@@ -89,7 +89,7 @@ public class LockManager {
 		
 	}
 	
-	private synchronized boolean acquireReadLock(TransactionId tid, PageId pid) {
+	private boolean acquireReadLock(TransactionId tid, PageId pid) {
 		
 		
 		
@@ -143,7 +143,7 @@ public class LockManager {
 		
 	}
 	
-	private synchronized boolean acquireReadWriteLock(TransactionId tid, PageId pid) {
+	private boolean acquireReadWriteLock(TransactionId tid, PageId pid) {
 		
 		TransactionId notNullTd;
 		

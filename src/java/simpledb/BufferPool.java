@@ -304,8 +304,10 @@ public class BufferPool {
      */
 	public synchronized void flushPages(TransactionId tid) throws IOException {
 
-		for (Map.Entry<PageId, Page> entry : bufferPool.entrySet()) {
-			flushPage(entry.getKey());
+		Set<PageId> dirtyPages = lockManager.getDirtiedPages(tid);
+		
+		for (PageId pid: dirtyPages) {
+			flushPage(pid);
 		}
 	}
 
