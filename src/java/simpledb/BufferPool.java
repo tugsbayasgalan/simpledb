@@ -36,7 +36,7 @@ public class BufferPool {
     
     private int numPages;
     
-    private Map<PageId, Page> bufferPool;
+    private ConcurrentHashMap<PageId, Page> bufferPool;
     
     private AtomicInteger currentNumPages;
     
@@ -50,7 +50,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         // some code goes here
     	this.numPages = numPages;
-    	this.bufferPool = new HashMap<>();
+    	this.bufferPool = new ConcurrentHashMap<>();
     	this.currentNumPages = new AtomicInteger(0);
     	this.lockManager = new LockManager();
     			
@@ -117,7 +117,7 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      * @param pid the ID of the page to unlock
      */
-    public  void releasePage(TransactionId tid, PageId pid) {
+    public void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2
     	    lockManager.releasePage(tid, pid);
@@ -181,6 +181,8 @@ public class BufferPool {
     		}
     		
     		lockManager.releasePage(tid, null);
+    		
+    		
     		
     		
     	

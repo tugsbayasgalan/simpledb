@@ -41,9 +41,9 @@ public class LockManager {
 	}
 	
 	public synchronized boolean acquireLock(TransactionId tid, PageId pid, Permissions perm) throws TransactionAbortedException {
-		long start = System.currentTimeMillis();
+		
 		if (perm.equals(Permissions.READ_ONLY)) {
-			
+			long start = System.currentTimeMillis();
 			while(!acquireReadLock(tid, pid)) {
 				try {
 					Thread.sleep(20);
@@ -53,7 +53,7 @@ public class LockManager {
 				}
 				
 				long current = System.currentTimeMillis();
-				if (current - start > 5000) {
+				if (current - start > 2000) {
 					throw new TransactionAbortedException();
 				}
 				
@@ -64,7 +64,7 @@ public class LockManager {
 		}
 		
 		if (perm.equals(Permissions.READ_WRITE)) {
-			
+			long start = System.currentTimeMillis();
 			while(!acquireReadWriteLock(tid, pid)) {
 				try {
 					Thread.sleep(20);
@@ -74,7 +74,7 @@ public class LockManager {
 				}
 				
 				long current = System.currentTimeMillis();
-				if (current - start > 5000) {
+				if (current - start > 2000) {
 					throw new TransactionAbortedException();
 				}
 			}
@@ -106,7 +106,7 @@ public class LockManager {
 				HashSet<TransactionId> tids = new HashSet<>();
 				tids.add(tid);
 				sharedLocks.put(pid, tids);
-				return true;
+				
 			}
 			
 			if (sharedPages.containsKey(tid)) {
@@ -161,6 +161,7 @@ public class LockManager {
 		
 		if (exclusiveLocks.containsKey(pid)) {
 			if (exclusiveLocks.get(pid).equals(notNullTd)) {
+				
 				return true;
 			}
 			return false;
@@ -172,7 +173,9 @@ public class LockManager {
 				
 				HashSet<TransactionId> tids = sharedLocks.get(pid);
 				if (tids.contains(tid)) {
+					
 					if (tids.size() == 1) {
+						
 						exclusiveLocks.put(pid, notNullTd);
 						if (exclusivePages.containsKey(tid)) {
 							exclusivePages.get(tid).add(pid);
@@ -205,10 +208,12 @@ public class LockManager {
 					
 					else {
 						
+						
 						return false;
 					}
 					
 				} else {
+					
 					return false;
 				}
 				
@@ -227,6 +232,8 @@ public class LockManager {
 					exclusivePages.put(notNullTd, pids);
 				}
 				
+				
+				
 				return true;
 			}
 		}
@@ -237,7 +244,7 @@ public class LockManager {
 
 	
 	
-	public boolean holdsLock(TransactionId tid, PageId pid) {
+	public synchronized boolean holdsLock(TransactionId tid, PageId pid) {
 		
 		if (sharedLocks.containsKey(pid) && sharedLocks.get(pid).contains(tid)) {
 			return true;
@@ -306,19 +313,25 @@ public class LockManager {
 		
 		else if (pid == null) {
 			
+			
+			
 			if (sharedPages.containsKey(tid)) {
 				HashSet<PageId> pids = sharedPages.get(tid);
 				
 				for (PageId pageID: pids) {
 					if (sharedLocks.containsKey(pageID)) {
 						sharedLocks.get(pageID).remove(tid);
+						
 						if (sharedLocks.get(pageID).size() == 0) {
+							
 							sharedLocks.remove(pageID);
 						}
 					}
 				}
 				
 				sharedPages.remove(tid);
+				
+				
 			}
 			
 			if (exclusivePages.containsKey(tid)) {
@@ -350,6 +363,8 @@ public class LockManager {
 		
 		return result;
 	}
+	
+	
 
 	
 
