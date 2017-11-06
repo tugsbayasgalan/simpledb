@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,7 +22,10 @@ public class LockManager {
 	private final HashMap<PageId, HashSet<TransactionId>> sharedLocks;
 	private final HashMap<PageId, TransactionId> exclusiveLocks;
 	
-	private final HashMap<TransactionId, List<TransactionId>> dependency;
+	private final HashMap<TransactionId, HashSet<PageId>> sharedPages;
+	private final HashMap<TransactionId, HashSet<PageId>> exclusivePages;
+	
+	
 	
 	
 	
@@ -31,25 +35,29 @@ public class LockManager {
 		this.lockHolders = new ConcurrentHashMap<>();
 		this.exclusiveLocks = new HashMap<PageId, TransactionId>();
 		this.sharedLocks =  new HashMap<PageId, HashSet<TransactionId>>();
-		this.dependency = new HashMap<TransactionId, List<TransactionId>>();
+		this.sharedPages = new HashMap<TransactionId, HashSet<PageId>>();
+		this.exclusivePages = new HashMap<TransactionId, HashSet<PageId>>();
+		
 	}
 	
-	public boolean acquireLock(TransactionId tid, PageId pid, Permissions perm) {
-		
+	public boolean acquireLock(TransactionId tid, PageId pid, Permissions perm) throws DbException {
+		long start = System.currentTimeMillis();
 		if (perm.equals(Permissions.READ_ONLY)) {
 			
-			if (exclusiveLocks.containsKey(pid) && exclusiveLocks.get(pid).equals(tid)) {
-				return true;
-			} 
-			
-			if (sharedLocks.containsKey(pid) && sharedLocks.get(pid).contains(tid)) {
-				return true;
-			}
-			
 			while(!acquireReadLock(tid, pid)) {
-				// wait until gets shared lock
+				try {
+					Thread.sleep(10);
+				} catch (Exception e){
+					e.printStackTrace();
+					System.out.println("Error occured while waiting");
+				}
+				
+				long current = System.currentTimeMillis();
+				if (current - start > 5000) {
+					throw new DbException("time out");
+				}
+				
 			}
-			
 			
 			return true;
 			
@@ -57,16 +65,19 @@ public class LockManager {
 		
 		if (perm.equals(Permissions.READ_WRITE)) {
 			
-			if (exclusiveLocks.containsKey(pid) && exclusiveLocks.get(pid).equals(tid)) {
-				return true;
+			while(!acquireReadWriteLock(tid, pid)) {
+				try {
+					Thread.sleep(10);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.out.println("Error occured while waiting");
+				}
+				
+				long current = System.currentTimeMillis();
+				if (current - start > 5000) {
+					throw new DbException("time out");
+				}
 			}
-			
-			while (!acquireReadWriteLock(tid, pid)) {
-				// wait until gets exclusive lock
-			}
-			
-			// TODO this is sketchy, might check later
-			
 			return true;
 			
 		}
@@ -79,77 +90,137 @@ public class LockManager {
 	}
 	
 	private boolean acquireReadLock(TransactionId tid, PageId pid) {
-		lockHolders.putIfAbsent(pid, new Object());
 		
-		Object lock = lockHolders.get(pid);
 		
-		while(true) {
-			synchronized(lock) {
-				if (exclusiveLocks.get(pid) == null || exclusiveLocks.get(pid).equals(tid)) {
-					
-					sharedLocks.putIfAbsent(pid, new HashSet<TransactionId>());
-					sharedLocks.get(pid).add(tid);
-					
-					return true;
-				}
-				
-				
+		// if doesn't have the exclusive lock yet
+		if (!exclusiveLocks.containsKey(pid)) {
+			
+			if (sharedLocks.containsKey(pid)) {
+				sharedLocks.get(pid).add(tid);
 				
 			}
+			
+			if (!sharedLocks.containsKey(pid)) {
+				HashSet<TransactionId> tids = new HashSet<>();
+				tids.add(tid);
+				sharedLocks.put(pid, tids);
+				return true;
+			}
+			
+			if (sharedPages.containsKey(tid)) {
+				sharedPages.get(tid).add(pid);
+			}
+			
+			if (!sharedPages.containsKey(tid)) {
+				HashSet<PageId> pids = new HashSet<>();
+				pids.add(pid);
+				sharedPages.put(tid, pids);
+				
+			}
+			
+			return true;
+			
+		} 
+		
+		// if it has write lock
+		else {
+			TransactionId exclusiveTransaction = exclusiveLocks.get(pid);
+			
+			if (exclusiveTransaction != null && exclusiveTransaction.equals(tid)) {
+				return true;
+			}
+			
+			else {
+				return false;
+			}
 		}
+		
+		
+		
+		
+		
 	}
 	
 	private boolean acquireReadWriteLock(TransactionId tid, PageId pid) {
-		lockHolders.putIfAbsent(pid, new Object());
 		
-		Object lock = lockHolders.get(pid);
+		TransactionId notNullTd;
 		
-		while(true) {
-			synchronized(lock) {
-				List<TransactionId> allLockHolders = getLockHolders(pid);
-				
-				if (isIndependent(tid, allLockHolders)) {
-					
-					exclusiveLocks.put(pid, tid);
-					return true;
-				}
-			}
+		if (tid == null) {
+			notNullTd = new TransactionId();
 		}
-	}
-	
-	private List<TransactionId> getLockHolders(PageId pid){
 		
-		List<TransactionId> result = new ArrayList<>();
-		
-		if (sharedLocks.containsKey(pid)) {
-			result.addAll(sharedLocks.get(pid));
-			return result;
+		else {
+			notNullTd = tid;
 		}
+		
+		
 		
 		if (exclusiveLocks.containsKey(pid)) {
-			result.add(exclusiveLocks.get(pid));
-			return result;
-		}
-		
-		return result;
-		
-	}
-	
-	private boolean isIndependent(TransactionId tid, List<TransactionId> lockHolders) {
-		
-		if (lockHolders.isEmpty()) {
-			return true;
-		}
-		
-		if (lockHolders.size() == 1) {
-			if (lockHolders.get(0).equals(tid)) {
+			if (exclusiveLocks.get(pid).equals(notNullTd)) {
 				return true;
+			}
+			return false;
+		}
+		
+		else {
+			if (sharedLocks.containsKey(pid)) {
+				HashSet<TransactionId> tids = sharedLocks.get(pid);
 				
+				if (tids.size() == 1) {
+					exclusiveLocks.put(pid, notNullTd);
+					if (exclusivePages.containsKey(tid)) {
+						exclusivePages.get(tid).add(pid);
+					}
+					
+					else {
+						HashSet<PageId> pids = new HashSet<>();
+						pids.add(pid);
+						exclusivePages.put(notNullTd, pids);
+					}
+					
+					sharedLocks.get(pid).remove(notNullTd);
+					
+					if (sharedLocks.get(pid).size() == 0) {
+						sharedLocks.remove(pid);
+					}
+					
+					//System.out.println(sharedPages);
+					if (sharedPages.containsKey(notNullTd)) {
+						sharedPages.get(notNullTd).remove(pid);
+						if (sharedPages.get(notNullTd).size() == 0) {
+							sharedPages.remove(notNullTd);
+						}
+					}
+					
+					return true;
+				}
+				
+				else {
+					return false;
+				}
+			}
+			
+			else {
+				exclusiveLocks.put(pid, notNullTd);
+				
+				if (exclusivePages.containsKey(notNullTd)) {
+					exclusivePages.get(notNullTd).add(pid);
+				}
+				
+				else {
+					HashSet<PageId> pids = new HashSet<PageId>();
+					pids.add(pid);
+					exclusivePages.put(notNullTd, pids);
+				}
+				
+				return true;
 			}
 		}
 		
-		return false;
+		
 	}
+	
+
 	
 	
 	public boolean holdsLock(TransactionId tid, PageId pid) {
@@ -165,20 +236,107 @@ public class LockManager {
 		return false;
 	}
 	
-	public void releasePage(TransactionId tid, PageId pid) {
+	public synchronized void releasePage(TransactionId tid, PageId pid) {
 		
-		Object lock = lockHolders.get(pid);
-		
-		synchronized(lock) {
-			exclusiveLocks.remove(pid);
+		if (tid != null && pid != null) {
+			
+			if (sharedPages.containsKey(tid)) {
+				sharedPages.get(tid).remove(pid);
+			}
+			
+			if (exclusivePages.containsKey(tid)) {
+				exclusivePages.get(tid).remove(pid);
+			}
+			
 			if (sharedLocks.containsKey(pid)) {
-				if (sharedLocks.get(pid).contains(tid)) {
-					sharedLocks.get(pid).remove(tid);
+				sharedLocks.get(pid).remove(tid);
+			}
+			
+			if (exclusiveLocks.containsKey(pid)) {
+				exclusiveLocks.remove(pid);
+			}
+			
+		}
+		
+		else if (tid == null) {
+			if (sharedLocks.containsKey(pid)) {
+				
+				HashSet<TransactionId> tids = sharedLocks.get(pid);
+				
+				for (TransactionId transaction: tids) {
+					if (sharedPages.containsKey(transaction)) {
+						sharedPages.get(transaction).remove(pid);
+						if (sharedPages.get(transaction).size() == 0) {
+							sharedPages.remove(transaction);
+						}
+					}
 				}
+				
+				sharedLocks.remove(pid);
+			}
+			
+			if (exclusiveLocks.containsKey(pid)) {
+				TransactionId transaction = exclusiveLocks.get(pid);
+				
+				if (exclusivePages.containsKey(transaction)) {
+					exclusivePages.get(transaction).remove(pid);
+					if (exclusivePages.get(transaction).size() == 0) {
+						exclusivePages.remove(transaction);
+					}
+				}
+				
+				exclusiveLocks.remove(pid);
+				
 			}
 		}
 		
+		else if (pid == null) {
+			
+			if (sharedPages.containsKey(tid)) {
+				HashSet<PageId> pids = sharedPages.get(tid);
+				
+				for (PageId pageID: pids) {
+					if (sharedLocks.containsKey(pageID)) {
+						sharedLocks.get(pageID).remove(tid);
+						if (sharedLocks.get(pageID).size() == 0) {
+							sharedLocks.remove(pageID);
+						}
+					}
+				}
+				
+				sharedPages.remove(tid);
+			}
+			
+			if (exclusivePages.containsKey(tid)) {
+				HashSet<PageId> pids = exclusivePages.get(tid);
+				
+				for (PageId pageID: pids) {
+					if (exclusiveLocks.containsKey(pageID)) {
+						exclusiveLocks.remove(pageID);
+					}
+				}
+				
+				exclusivePages.remove(tid);
+			}
+		}
+		
+		
+		
+		
+		
 	}
 
+	public synchronized Set<PageId> getDirtiedPages(TransactionId tid) {
+		
+		Set<PageId> result = new HashSet<>();
+		
+		if (exclusivePages.containsKey(tid)) {
+			result.addAll(exclusivePages.get(tid));
+		}
+		
+		return result;
+	}
+
+	
 
 }
