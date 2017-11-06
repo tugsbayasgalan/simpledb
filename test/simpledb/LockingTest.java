@@ -145,7 +145,7 @@ public class LockingTest extends TestUtil.CreateHeapFile {
    * Unit test for BufferPool.getPage() assuming locking.
    * Acquires read locks on different pages.
    */
-  @Test public void acquireReadLocksOnTwoPages() throws Exception {
+ @Test public void acquireReadLocksOnTwoPages() throws Exception {
     metaLockTester(tid1, p0, Permissions.READ_ONLY,
                    tid2, p1, Permissions.READ_ONLY, true);
   }

@@ -89,7 +89,9 @@ public class LockManager {
 		
 	}
 	
-	private boolean acquireReadLock(TransactionId tid, PageId pid) {
+	private synchronized boolean acquireReadLock(TransactionId tid, PageId pid) {
+		
+		
 		
 		
 		// if doesn't have the exclusive lock yet
@@ -141,9 +143,11 @@ public class LockManager {
 		
 	}
 	
-	private boolean acquireReadWriteLock(TransactionId tid, PageId pid) {
+	private synchronized boolean acquireReadWriteLock(TransactionId tid, PageId pid) {
 		
 		TransactionId notNullTd;
+		
+		
 		
 		if (tid == null) {
 			notNullTd = new TransactionId();
@@ -164,40 +168,50 @@ public class LockManager {
 		
 		else {
 			if (sharedLocks.containsKey(pid)) {
-				HashSet<TransactionId> tids = sharedLocks.get(pid);
 				
-				if (tids.size() == 1) {
-					exclusiveLocks.put(pid, notNullTd);
-					if (exclusivePages.containsKey(tid)) {
-						exclusivePages.get(tid).add(pid);
+				
+				HashSet<TransactionId> tids = sharedLocks.get(pid);
+				if (tids.contains(tid)) {
+					if (tids.size() == 1) {
+						exclusiveLocks.put(pid, notNullTd);
+						if (exclusivePages.containsKey(tid)) {
+							exclusivePages.get(tid).add(pid);
+						}
+						
+						else {
+							HashSet<PageId> pids = new HashSet<>();
+							pids.add(pid);
+							exclusivePages.put(notNullTd, pids);
+						}
+						
+						sharedLocks.get(pid).remove(notNullTd);
+						
+						if (sharedLocks.get(pid).size() == 0) {
+							sharedLocks.remove(pid);
+						}
+						
+						//System.out.println(sharedPages);
+						if (sharedPages.containsKey(notNullTd)) {
+							sharedPages.get(notNullTd).remove(pid);
+							if (sharedPages.get(notNullTd).size() == 0) {
+								sharedPages.remove(notNullTd);
+							}
+						}
+						
+						
+						
+						return true;
 					}
 					
 					else {
-						HashSet<PageId> pids = new HashSet<>();
-						pids.add(pid);
-						exclusivePages.put(notNullTd, pids);
+						
+						return false;
 					}
 					
-					sharedLocks.get(pid).remove(notNullTd);
-					
-					if (sharedLocks.get(pid).size() == 0) {
-						sharedLocks.remove(pid);
-					}
-					
-					//System.out.println(sharedPages);
-					if (sharedPages.containsKey(notNullTd)) {
-						sharedPages.get(notNullTd).remove(pid);
-						if (sharedPages.get(notNullTd).size() == 0) {
-							sharedPages.remove(notNullTd);
-						}
-					}
-					
-					return true;
-				}
-				
-				else {
+				} else {
 					return false;
 				}
+				
 			}
 			
 			else {

@@ -160,8 +160,10 @@ public class BufferPool {
         // not necessary for lab1|lab2
     	
     		if (commit) {
+    			
     			flushPages(tid);
     		} else {
+    			
     			
     			Set<PageId> dirtyPages = lockManager.getDirtiedPages(tid);
     			
@@ -262,14 +264,14 @@ public class BufferPool {
         Also used by B+ tree files to ensure that deleted pages
         are removed from the cache so they can be reused safely
     */
-    public synchronized void discardPage(PageId pid) {
-        // some code goes here
-        // not necessary for lab1
-    	if(bufferPool.containsKey(pid)){
-    		bufferPool.remove(pid);
-    		currentNumPages.decrementAndGet();
-    	}
-    }
+	public synchronized void discardPage(PageId pid) {
+		// some code goes here
+		// not necessary for lab1
+		if (bufferPool.containsKey(pid)) {
+			bufferPool.remove(pid);
+			currentNumPages.decrementAndGet();
+		}
+	}
 
     /**
      * Flushes a certain page to disk
@@ -313,6 +315,7 @@ public class BufferPool {
      */
 	private synchronized void evictPage() throws DbException {
 
+		
 		Iterator<PageId> keyIterator = bufferPool.keySet().iterator();
 
 		if (keyIterator.hasNext()) {
