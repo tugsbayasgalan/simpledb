@@ -46,7 +46,7 @@ public class LockManager {
 			long start = System.currentTimeMillis();
 			while(!acquireReadLock(tid, pid)) {
 				try {
-					Thread.sleep(20);
+					Thread.sleep(50);
 				} catch (Exception e){
 					e.printStackTrace();
 					System.out.println("Error occured while waiting");
@@ -67,7 +67,7 @@ public class LockManager {
 			long start = System.currentTimeMillis();
 			while(!acquireReadWriteLock(tid, pid)) {
 				try {
-					Thread.sleep(20);
+					Thread.sleep(50);
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.out.println("Error occured while waiting");

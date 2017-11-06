@@ -288,7 +288,7 @@ public class BufferPool {
 			Page flushPage = bufferPool.get(pid);
 			TransactionId tid = flushPage.isDirty();
 			if (tid != null) {
-
+                System.out.println("Am i here");
 				DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
 
 				file.writePage(flushPage);
@@ -323,29 +323,35 @@ public class BufferPool {
 		Iterator<PageId> keyIterator = bufferPool.keySet().iterator();
 
 		if (keyIterator.hasNext()) {
-
+            
 			PageId key = keyIterator.next();
 			Page page = bufferPool.get(key);
 			
 			if (page.isDirty() == null) {
 				try {
-					flushPage(page.getId());
-					lockManager.releasePage(null, page.getId());
-					bufferPool.remove(page.getId());
+					flushPage(key);
+					lockManager.releasePage(null, key);
+					bufferPool.remove(key);
 				} catch (Exception e) {
 
 					e.getStackTrace();
 					throw new DbException("Failed to evict");
 
 				}
+				
+				
+				
+				
 			}
 
-			
-			
 
 			currentNumPages.decrementAndGet();
+			
+			
 
 		}
+		
+		
 
     	
     	
