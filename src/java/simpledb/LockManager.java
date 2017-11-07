@@ -29,7 +29,15 @@ public class LockManager {
 	private final long timeOutTime;
 	
 	
-	
+	public LockManager(long sleepTime, long timeOutTime) {
+		this.exclusiveLocks = new HashMap<PageId, TransactionId>();
+		this.sharedLocks =  new HashMap<PageId, HashSet<TransactionId>>();
+		this.sharedPages = new HashMap<TransactionId, HashSet<PageId>>();
+		this.exclusivePages = new HashMap<TransactionId, HashSet<PageId>>();
+		
+		this.sleepTime = sleepTime;
+		this.timeOutTime = timeOutTime;
+	}
 	
 	public LockManager() {
 		
@@ -349,9 +357,7 @@ public class LockManager {
 			}
 		}
 		
-		
-		
-		
+
 		
 	}
 	
