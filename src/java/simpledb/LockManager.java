@@ -1,13 +1,11 @@
 package simpledb;
 
-import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+
 
 
 
@@ -18,7 +16,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class LockManager {
 	
-	private final ConcurrentMap<PageId, Object> lockHolders;
+	
 	
 	private final HashMap<PageId, HashSet<TransactionId>> sharedLocks;
 	private final HashMap<PageId, TransactionId> exclusiveLocks;
@@ -26,18 +24,21 @@ public class LockManager {
 	private final HashMap<TransactionId, HashSet<PageId>> sharedPages;
 	private final HashMap<TransactionId, HashSet<PageId>> exclusivePages;
 	
+	private final long sleepTime;
 	
-	
+	private final long timeOutTime;
 	
 	
 	
 	
 	public LockManager() {
-		this.lockHolders = new ConcurrentHashMap<>();
+		
 		this.exclusiveLocks = new HashMap<PageId, TransactionId>();
 		this.sharedLocks =  new HashMap<PageId, HashSet<TransactionId>>();
 		this.sharedPages = new HashMap<TransactionId, HashSet<PageId>>();
 		this.exclusivePages = new HashMap<TransactionId, HashSet<PageId>>();
+		this.sleepTime = 20;
+		this.timeOutTime = 200;
 		
 	}
 	
@@ -48,14 +49,14 @@ public class LockManager {
 			while(!acquireReadLock(tid, pid)) {
 				try {
 					Random rand = new Random();
-					Thread.sleep(20 + rand.nextInt(10));
+					Thread.sleep(this.sleepTime + rand.nextInt(10));
 				} catch (Exception e){
 					e.printStackTrace();
 					System.out.println("Error occured while waiting");
 				}
 				
 				long current = System.currentTimeMillis();
-				if (current - start > 250) {
+				if (current - start > this.timeOutTime) {
 					releasePage(tid, pid);
 					throw new TransactionAbortedException();
 				}
@@ -71,14 +72,14 @@ public class LockManager {
 			while(!acquireReadWriteLock(tid, pid)) {
 				try {
 					Random rand = new Random();
-					Thread.sleep(20 + rand.nextInt(10));
+					Thread.sleep(this.sleepTime + rand.nextInt(10));
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.out.println("Error occured while waiting");
 				}
 				
 				long current = System.currentTimeMillis();
-				if (current - start > 250) {
+				if (current - start > this.timeOutTime) {
 					releasePage(tid, pid);
 					throw new TransactionAbortedException();
 				}
@@ -151,9 +152,7 @@ public class LockManager {
 	private boolean acquireReadWriteLock(TransactionId tid, PageId pid) {
 		
 		TransactionId notNullTd;
-		
-		
-		System.out.println(tid);
+
 		if (tid == null) {
 			notNullTd = new TransactionId();
 		}
@@ -161,8 +160,6 @@ public class LockManager {
 		else {
 			notNullTd = tid;
 		}
-		
-		
 		
 		if (exclusiveLocks.containsKey(pid)) {
 			if (exclusiveLocks.get(pid).equals(notNullTd)) {
@@ -198,7 +195,7 @@ public class LockManager {
 							sharedLocks.remove(pid);
 						}
 						
-						//System.out.println(sharedPages);
+						
 						if (sharedPages.containsKey(notNullTd)) {
 							sharedPages.get(notNullTd).remove(pid);
 							if (sharedPages.get(notNullTd).size() == 0) {
@@ -262,7 +259,7 @@ public class LockManager {
 		return false;
 	}
 	
-	public void releasePage(TransactionId tid, PageId pid) {
+	public synchronized void releasePage(TransactionId tid, PageId pid) {
 		
 		if (tid != null && pid != null) {
 			
@@ -357,6 +354,7 @@ public class LockManager {
 		
 		
 	}
+	
 
 	public synchronized Set<PageId> getDirtiedPages(TransactionId tid) {
 		

@@ -131,7 +131,6 @@ public class TransactionTest extends SimpleDbTestBase {
                         q3.start();
                         q3.next();
                         q3.close();
-                        System.out.println("Transaction done");
                         tr.commit();
                         break;
                     } catch (TransactionAbortedException te) {
