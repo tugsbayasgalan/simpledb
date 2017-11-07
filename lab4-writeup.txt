@@ -1,0 +1,32 @@
+Name: Tugsbayasgalan Manlaibaatar
+Collab: William Wong
+Time Spent: 18 hours
+
+
+Changes made to API: 
+I didn't change any given method signatures 
+
+Functionality: 
+It has every functionality required for this lab
+
+Locking Strategy: 
+I did the page level locking. I created another class called LockManager which keeps track
+of all the locks inside the bufferpool. I basically keep track of pages with transactions
+that hold shared locks and pages with transactions that holds exclusive locks. Whenever any 
+transaction tries to acquire a lock, it first checks if the transaction can hold the lock and
+if it is, we modify our page and transaction lock dependency. (For example, if another transaction
+holds exclusive lock on the page, we cannot get any lock until that transaction releases the lock)
+Due to the nature of my implementation, I didn't need to use different java locks. 
+
+
+DeadLock Detection:
+I simply did timeout approach. So basically a transaction waits for the lock for certain amount of
+time, and if the given time passes, the transaction just aborts. Since we cannot keep trying for every
+moment, I make it so that the thread sleeps for around some random number between 20 and 30. The reason
+for randomness is that when two threads try to do same thing at the same time (Transaction System Test)
+there is certain delay for one of them to make it successful for the other one. 
+
+ 
+
+
+ 
