@@ -93,7 +93,7 @@ public class BufferPool {
 		// TODO maybe not exceptions ???
 		if (!bufferPool.containsKey(pid)) {
 			Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
-			if (currentNumPages.intValue() > this.numPages) {
+			if (currentNumPages.intValue() >= this.numPages) {
 
 				evictPage();
 			}
@@ -162,8 +162,8 @@ public class BufferPool {
     		if (commit) {
     			
     			flushPages(tid);
-    		} else {
     			
+    		} else {
     			
     			Set<PageId> dirtyPages = lockManager.getDirtiedPages(tid);
     			
@@ -288,7 +288,7 @@ public class BufferPool {
 			Page flushPage = bufferPool.get(pid);
 			TransactionId tid = flushPage.isDirty();
 			if (tid != null) {
-                System.out.println("Am i here");
+                
 				DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
 
 				file.writePage(flushPage);
@@ -321,44 +321,38 @@ public class BufferPool {
 
 		
 		Iterator<PageId> keyIterator = bufferPool.keySet().iterator();
-
-		if (keyIterator.hasNext()) {
-            
-			PageId key = keyIterator.next();
-			Page page = bufferPool.get(key);
-			
-			if (page.isDirty() == null) {
-				try {
-					flushPage(key);
-					lockManager.releasePage(null, key);
-					bufferPool.remove(key);
-				} catch (Exception e) {
-
-					e.getStackTrace();
-					throw new DbException("Failed to evict");
-
-				}
+		
+		PageId pid = null;
+		
+		while(keyIterator.hasNext()) {
+			pid = keyIterator.next();
+			if (bufferPool.get(pid).isDirty() == null) {
 				
-				
-				
-				
+				break;
 			}
-
-
-			currentNumPages.decrementAndGet();
-			
-			
-
 		}
 		
 		
-
-    	
-    	
-    		
-    		
-    		
+		
+		if (pid == null || bufferPool.get(pid).isDirty() != null) {
+			throw new DbException("");
+		}
+		
+		try {
+			flushPage(pid);
 			
+		} catch (Exception e) {
+			e.getStackTrace();
+			throw new DbException("Failed to evict");
+		}
+		
+		
+		lockManager.releasePage(null, pid);
+		bufferPool.remove(pid);
+		currentNumPages.decrementAndGet();
+
+
+	
     }
     		
     

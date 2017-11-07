@@ -32,7 +32,7 @@ public class TupleIterator implements OpIterator {
                         "incompatible tuple in tuple set");
         }
     }
-
+    
     public void open() {
         i = tuples.iterator();
     }

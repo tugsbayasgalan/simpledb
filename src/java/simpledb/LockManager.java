@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -46,14 +47,16 @@ public class LockManager {
 			long start = System.currentTimeMillis();
 			while(!acquireReadLock(tid, pid)) {
 				try {
-					Thread.sleep(50);
+					Random rand = new Random();
+					Thread.sleep(20 + rand.nextInt(10));
 				} catch (Exception e){
 					e.printStackTrace();
 					System.out.println("Error occured while waiting");
 				}
 				
 				long current = System.currentTimeMillis();
-				if (current - start > 2000) {
+				if (current - start > 250) {
+					releasePage(tid, pid);
 					throw new TransactionAbortedException();
 				}
 				
@@ -67,14 +70,16 @@ public class LockManager {
 			long start = System.currentTimeMillis();
 			while(!acquireReadWriteLock(tid, pid)) {
 				try {
-					Thread.sleep(50);
+					Random rand = new Random();
+					Thread.sleep(20 + rand.nextInt(10));
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.out.println("Error occured while waiting");
 				}
 				
 				long current = System.currentTimeMillis();
-				if (current - start > 2000) {
+				if (current - start > 250) {
+					releasePage(tid, pid);
 					throw new TransactionAbortedException();
 				}
 			}
@@ -148,7 +153,7 @@ public class LockManager {
 		TransactionId notNullTd;
 		
 		
-		
+		System.out.println(tid);
 		if (tid == null) {
 			notNullTd = new TransactionId();
 		}
@@ -257,7 +262,7 @@ public class LockManager {
 		return false;
 	}
 	
-	public synchronized void releasePage(TransactionId tid, PageId pid) {
+	public void releasePage(TransactionId tid, PageId pid) {
 		
 		if (tid != null && pid != null) {
 			
@@ -360,6 +365,8 @@ public class LockManager {
 		if (exclusivePages.containsKey(tid)) {
 			result.addAll(exclusivePages.get(tid));
 		}
+		
+		
 		
 		return result;
 	}
