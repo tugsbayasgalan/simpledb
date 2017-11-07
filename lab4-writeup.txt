@@ -14,6 +14,7 @@ Functionality:
 
 It has every functionality required for this lab
 
+
 Locking Strategy: 
 
 I did the page level locking. I created another class called LockManager which keeps track
@@ -32,6 +33,11 @@ time, and if the given time passes, the transaction just aborts. Since we cannot
 moment, I make it so that the thread sleeps for around some random number between 20 and 30. The reason
 for randomness is that when two threads try to do same thing at the same time (Transaction System Test)
 there is certain delay for one of them to make it successful for the other one. 
+
+
+Bonus Points:
+
+I didn't do any of the bonus parts.
 
 
 Most Confusing:
