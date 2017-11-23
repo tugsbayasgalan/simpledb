@@ -129,8 +129,8 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 		assertEquals(1200, count);
 	}
 
-	@Test
-	public void testSplitLeafPage() throws Exception {
+	
+	@Test public void testSplitLeafPage() throws Exception {
 		// This should create a B+ tree with one full page
 		BTreeFile onePageFile = BTreeUtility.createRandomBTreeFile(2, 502,
 				null, null, 0);
@@ -163,8 +163,8 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 
 	}
 
-	@Test
-	public void testSplitRootPage() throws Exception {
+	
+	@Test public void testSplitRootPage() throws Exception {
 		// This should create a packed B+ tree with no empty slots
 		// There are 503 keys per internal page (504 children) and 502 tuples per leaf page
 		// 504 * 502 = 253008
@@ -222,8 +222,8 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 		}
 	}
 
-	@Test
-	public void testSplitInternalPage() throws Exception {
+	
+	@Test public void testSplitInternalPage() throws Exception {
 		// For this test we will decrease the size of the Buffer Pool pages
     	BufferPool.setPageSize(1024);
 
