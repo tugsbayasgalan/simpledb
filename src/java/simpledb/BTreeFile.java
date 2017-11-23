@@ -748,8 +748,9 @@ public class BTreeFile implements DbFile {
 		if (isRightSibling) {
 			tuple = it.next();
 		}
-		entry.setKey(it.next().getField(this.keyField));
+		entry.setKey(tuple.getField(this.keyField));
 		parent.updateEntry(entry);
+
 	}
 
 	/**
