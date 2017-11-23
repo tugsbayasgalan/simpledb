@@ -31,7 +31,7 @@ public class BTreeNextKeyLockingTest extends SimpleDbTestBase {
 		Database.getBufferPool().transactionComplete(tid);
 	}
 
-	@Test
+	
 	public void nextKeyLockingTestLessThan() throws Exception {
 		
 		// This should create a B+ tree with 100 leaf pages

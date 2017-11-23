@@ -195,6 +195,7 @@ public class BTreeFile implements DbFile {
 			Field f)
 					throws DbException, TransactionAbortedException {
 		// some code goes here
+		
 		switch (pid.pgcateg()) {
 		case BTreePageId.LEAF:
 			BTreeLeafPage leafPage = (BTreeLeafPage) this.getPage(tid, dirtypages, pid, perm);
@@ -831,7 +832,7 @@ public class BTreeFile implements DbFile {
 		// that the entries are evenly distributed. Be sure to update
 		// the corresponding parent entry. Be sure to update the parent
 		// pointers of all children in the entries that were moved.
-
+        
 		int numEntriesPage = page.getNumEntries();
 		int numSiblingPage = leftSibling.getNumEntries();
 
@@ -853,8 +854,16 @@ public class BTreeFile implements DbFile {
 
 		parentEntry.setKey(centerEntry.getKey());
 		parent.updateEntry(parentEntry);
+		
 		this.updateParentPointers(tid, dirtypages, page);
 		this.updateParentPointers(tid, dirtypages, leftSibling);
+
+
+		dirtypages.put(page.getId(), page);
+		dirtypages.put(leftSibling.getId(), leftSibling);
+		dirtypages.put(parent.getId(), parent);
+
+		
 
 
 	}
@@ -887,15 +896,15 @@ public class BTreeFile implements DbFile {
 		// pointers of all children in the entries that were moved.
 		int numEntriesPage = page.getNumEntries();
 		int numSiblingPage = rightSibling.getNumEntries();
-
+        
 		int difference = numSiblingPage - numEntriesPage;
-
+        
 		Iterator<BTreeEntry> it = rightSibling.iterator();
 		Iterator<BTreeEntry> pageIt = page.reverseIterator();
 
 		BTreeEntry centerEntry = new BTreeEntry(parentEntry.getKey(), pageIt.next().getRightChild(), null);
 
-		for (int i = 0; i < difference/2; i++) {
+		for (int i = 0; i < difference/2 ; i++) {
 			BTreeEntry current = it.next();
 			centerEntry.setRightChild(current.getLeftChild());
 
@@ -908,6 +917,12 @@ public class BTreeFile implements DbFile {
 		parent.updateEntry(parentEntry);
 		this.updateParentPointers(tid, dirtypages, page);
 		this.updateParentPointers(tid, dirtypages, rightSibling);
+		
+		dirtypages.put(page.getId(), page);
+		dirtypages.put(rightSibling.getId(), rightSibling);
+		dirtypages.put(parent.getId(), parent);
+
+		
 
 
 
@@ -944,7 +959,7 @@ public class BTreeFile implements DbFile {
 
 
 		Iterator<Tuple> it = rightPage.iterator();
-
+        
 		while (it.hasNext()) {
 			Tuple currentTuple = it.next();
 			rightPage.deleteTuple(currentTuple);
