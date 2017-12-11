@@ -160,8 +160,19 @@ public class BufferPool {
         // not necessary for lab1|lab2
     	
     		if (commit) {
+    			Set<PageId> dirtyPages = lockManager.getDirtiedPages(tid);
     			
-    			flushPages(tid);
+    			for (PageId pid: dirtyPages) {
+    				Page page = this.bufferPool.get(pid);
+    				
+    				if (tid.equals(page.isDirty())) {
+    					flushPage(pid);
+    					page.setBeforeImage();
+    				}
+    			}
+    			
+    			
+    			
     			
     		} else {
     			
@@ -255,6 +266,18 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
+    	    Iterator<PageId> it = this.bufferPool.keySet().iterator();
+    	    
+    	    while (it.hasNext()) {
+    	    	
+    	    		PageId pageId = it.next();
+    	    		
+    	    		flushPage(pageId);
+    	    		
+    	    		
+    	    	
+    	    }
+    	
 
     }
 
@@ -289,6 +312,8 @@ public class BufferPool {
 			TransactionId tid = flushPage.isDirty();
 			if (tid != null) {
                 
+				Database.getLogFile().logWrite(tid, flushPage.getBeforeImage(), flushPage);
+			    Database.getLogFile().force();
 				DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
 
 				file.writePage(flushPage);
@@ -305,11 +330,21 @@ public class BufferPool {
     /** Write all pages of the specified transaction to disk.
      */
 	public synchronized void flushPages(TransactionId tid) throws IOException {
+		
+		
 
 		Set<PageId> dirtyPages = lockManager.getDirtiedPages(tid);
 		
 		for (PageId pid: dirtyPages) {
 			flushPage(pid);
+			
+			Page page = this.bufferPool.get(pid);
+			page.setBeforeImage();
+			
+			
+			
+			
+			
 		}
 	}
 
