@@ -466,6 +466,62 @@ public class LogFile {
         synchronized (Database.getBufferPool()) {
             synchronized(this) {
                 preAppend();
+                long firstLogRecord = this.tidToFirstLogRecord.get(tid.getId());
+                this.raf.seek(firstLogRecord);
+                long end;
+				if (this.currentOffset == -1) {
+					end = raf.length();
+				} else {
+					end = this.currentOffset;
+				}
+				while (raf.getFilePointer() < end) {
+					try {
+						int logType = this.raf.readInt();
+						long currentTid = this.raf.readLong();
+
+						switch (logType) {
+						case ABORT_RECORD:
+							break;
+						case COMMIT_RECORD:
+							break;
+						case UPDATE_RECORD:
+
+							Page before = this.readPageData(raf);
+							this.readPageData(raf);
+
+							if (currentTid == tid.getId()) {
+								PageId beforeId = before.getId();
+								Database.getBufferPool().discardPage(beforeId);
+								DbFile dbFile = Database.getCatalog().getDatabaseFile(beforeId.getTableId());
+								dbFile.writePage(before);
+
+							}
+
+							break;
+						case BEGIN_RECORD:
+							break;
+						case CHECKPOINT_RECORD:
+							int numCheckPointTransactions = this.raf.readInt();
+
+							for (int i = 0; i < numCheckPointTransactions; i++) {
+								raf.readLong();
+								raf.readLong();
+							}
+							break;
+
+						default:
+							System.out.println("Shouldn't reach here, I guess. But who knows");
+						}
+
+						raf.readLong();
+
+					} catch (Exception e) {
+						System.out.println(e);
+						break;
+					}
+				}
+                
+                
             
             }
         }
@@ -494,6 +550,35 @@ public class LogFile {
             synchronized (this) {
                 recoveryUndecided = false;
                 // some code goes here
+                
+                // last checkpoint offset
+                raf.seek(0);
+                
+                long checkPointOffset = raf.readLong();
+                
+                if (checkPointOffset != this.NO_CHECKPOINT_ID) {
+                		raf.seek(checkPointOffset);
+                		
+                		int logType = raf.readInt();
+                		long tid = raf.readLong();
+                		
+                		int numTransactions = raf.readInt();
+                		
+                		while (numTransactions > 0) {
+                			long transactionId = raf.readLong();
+                			long logRecord = raf.readLong();
+                			
+                			this.tidToFirstLogRecord.put(transactionId, logRecord);
+                			
+                		}
+                		
+                		raf.readLong();
+                		
+                		
+                }
+                
+                
+                
             }
          }
     }
