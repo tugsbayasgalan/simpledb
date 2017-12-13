@@ -452,6 +452,64 @@ public class LogFile {
         currentOffset = raf.getFilePointer();
         //print();
     }
+    
+	private void rollback(long transactionId) throws IOException {
+		long firstLogRecord = this.tidToFirstLogRecord.get(transactionId);
+		this.raf.seek(firstLogRecord);
+		long end;
+		if (this.currentOffset == -1) {
+			end = raf.length();
+		} else {
+			end = this.currentOffset;
+		}
+		while (raf.getFilePointer() < end) {
+			try {
+				int logType = this.raf.readInt();
+				long currentTid = this.raf.readLong();
+
+				switch (logType) {
+				case ABORT_RECORD:
+					break;
+				case COMMIT_RECORD:
+					break;
+				case UPDATE_RECORD:
+
+					Page before = this.readPageData(raf);
+					Page after = this.readPageData(raf);
+
+					if (currentTid == transactionId) {
+						PageId beforeId = before.getId();
+						Database.getBufferPool().discardPage(beforeId);
+						DbFile dbFile = Database.getCatalog().getDatabaseFile(beforeId.getTableId());
+						dbFile.writePage(before);
+
+					}
+
+					break;
+				case BEGIN_RECORD:
+					break;
+				case CHECKPOINT_RECORD:
+					int numCheckPointTransactions = this.raf.readInt();
+
+					for (int i = 0; i < numCheckPointTransactions; i++) {
+						raf.readLong();
+						raf.readLong();
+					}
+					break;
+
+				default:
+					System.out.println("Shouldn't reach here, I guess. But who knows");
+				}
+
+				raf.readLong();
+
+			} catch (Exception e) {
+				
+				break;
+			}
+		}
+
+	}
 
     /** Rollback the specified transaction, setting the state of any
         of pages it updated to their pre-updated state.  To preserve
@@ -466,61 +524,8 @@ public class LogFile {
         synchronized (Database.getBufferPool()) {
             synchronized(this) {
                 preAppend();
-                long firstLogRecord = this.tidToFirstLogRecord.get(tid.getId());
-                this.raf.seek(firstLogRecord);
-                long end;
-				if (this.currentOffset == -1) {
-					end = raf.length();
-				} else {
-					end = this.currentOffset;
-				}
-				while (raf.getFilePointer() < end) {
-					try {
-						int logType = this.raf.readInt();
-						long currentTid = this.raf.readLong();
-
-						switch (logType) {
-						case ABORT_RECORD:
-							break;
-						case COMMIT_RECORD:
-							break;
-						case UPDATE_RECORD:
-
-							Page before = this.readPageData(raf);
-							this.readPageData(raf);
-
-							if (currentTid == tid.getId()) {
-								PageId beforeId = before.getId();
-								Database.getBufferPool().discardPage(beforeId);
-								DbFile dbFile = Database.getCatalog().getDatabaseFile(beforeId.getTableId());
-								dbFile.writePage(before);
-
-							}
-
-							break;
-						case BEGIN_RECORD:
-							break;
-						case CHECKPOINT_RECORD:
-							int numCheckPointTransactions = this.raf.readInt();
-
-							for (int i = 0; i < numCheckPointTransactions; i++) {
-								raf.readLong();
-								raf.readLong();
-							}
-							break;
-
-						default:
-							System.out.println("Shouldn't reach here, I guess. But who knows");
-						}
-
-						raf.readLong();
-
-					} catch (Exception e) {
-						System.out.println(e);
-						break;
-					}
-				}
                 
+                this.rollback(tid.getId());
                 
             
             }
@@ -552,30 +557,86 @@ public class LogFile {
                 // some code goes here
                 
                 // last checkpoint offset
-                raf.seek(0);
+                this.raf.seek(0);
                 
                 long checkPointOffset = raf.readLong();
-                
-                if (checkPointOffset != this.NO_CHECKPOINT_ID) {
-                		raf.seek(checkPointOffset);
+                Set<Long> currentTransactions = new HashSet<>();
+                if (checkPointOffset != NO_CHECKPOINT_ID) {
+                		this.raf.seek(checkPointOffset);
                 		
-                		int logType = raf.readInt();
-                		long tid = raf.readLong();
+                		int logType = this.raf.readInt();
+                		long tid = this.raf.readLong();
                 		
-                		int numTransactions = raf.readInt();
+                		int numTransactions = this.raf.readInt();
                 		
                 		while (numTransactions > 0) {
-                			long transactionId = raf.readLong();
-                			long logRecord = raf.readLong();
-                			
+                			long transactionId = this.raf.readLong();
+                			long logRecord = this.raf.readLong();
+                			currentTransactions.add(transactionId);
                 			this.tidToFirstLogRecord.put(transactionId, logRecord);
+                			numTransactions--;
                 			
                 		}
                 		
-                		raf.readLong();
+                		this.raf.readLong();
                 		
                 		
                 }
+                
+                // the condition to break out of this loop is when there is nothing to read
+                // there might be better of doing this, but not sure
+                while (true) {
+                		try {
+                			
+                     	long offset = raf.getFilePointer();
+                    		int type = raf.readInt();
+                    		long transactionId = raf.readLong();
+                    		
+                    		switch (type) {
+                    		case ABORT_RECORD:
+                    			this.rollback(transactionId);
+                    			currentTransactions.remove(transactionId);
+                    			break;
+                    		case COMMIT_RECORD:
+                    			currentTransactions.remove(transactionId);
+                    			break;
+                    		case UPDATE_RECORD:
+                    			Page before = this.readPageData(raf);
+            					Page after = this.readPageData(raf);
+            					
+            					PageId afterId = after.getId();
+        						
+        						DbFile dbFile = Database.getCatalog().getDatabaseFile(afterId.getTableId());
+        						dbFile.writePage(after);
+        						
+        						Database.getBufferPool().discardPage(afterId);
+            					
+                    		case BEGIN_RECORD:
+                    			currentTransactions.add(transactionId);
+                    			this.tidToFirstLogRecord.put(transactionId, offset);
+                    			break;
+                    		case CHECKPOINT_RECORD:
+                    			
+                    			break;
+                    		default:
+                    			System.out.println("This should never happen");
+                    		
+                    		}
+                    		this.raf.readLong();
+                			
+                		} catch (EOFException e) {
+                			
+                			break;
+                		}
+                		
+                }
+
+                this.currentOffset = raf.getFilePointer();
+                for (Long transaction: currentTransactions) {
+                		this.rollback(transaction);
+                }
+                
+                
                 
                 
                 
