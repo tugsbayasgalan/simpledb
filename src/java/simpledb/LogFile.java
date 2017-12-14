@@ -463,7 +463,7 @@ public class LogFile {
 			end = this.currentOffset;
 		}
 		while (raf.getFilePointer() < end) {
-			try {
+			
 				int logType = this.raf.readInt();
 				long currentTid = this.raf.readLong();
 
@@ -503,10 +503,7 @@ public class LogFile {
 
 				raf.readLong();
 
-			} catch (Exception e) {
-				
-				break;
-			}
+			
 		}
 
 	}
@@ -523,6 +520,7 @@ public class LogFile {
         throws NoSuchElementException, IOException {
         synchronized (Database.getBufferPool()) {
             synchronized(this) {
+            	    
                 preAppend();
                 
                 this.rollback(tid.getId());
@@ -553,6 +551,7 @@ public class LogFile {
     public void recover() throws IOException {
         synchronized (Database.getBufferPool()) {
             synchronized (this) {
+            	    
                 recoveryUndecided = false;
                 // some code goes here
                 
@@ -616,7 +615,6 @@ public class LogFile {
                     			this.tidToFirstLogRecord.put(transactionId, offset);
                     			break;
                     		case CHECKPOINT_RECORD:
-                    			
                     			break;
                     		default:
                     			System.out.println("This should never happen");
@@ -633,7 +631,7 @@ public class LogFile {
 
                 this.currentOffset = raf.getFilePointer();
                 for (Long transaction: currentTransactions) {
-                		this.rollback(transaction);
+                		this.rollback(transaction.longValue());
                 }
                 
                 

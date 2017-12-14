@@ -62,6 +62,7 @@ public class LogTest extends SimpleDbTestBase {
     void doInsert(HeapFile hf, int t1, int t2)
         throws DbException, TransactionAbortedException, IOException {
         Transaction t = new Transaction();
+        
         t.start();
         if(t1 != -1)
             insertRow(hf, t, t1, 0);
