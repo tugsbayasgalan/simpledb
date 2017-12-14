@@ -581,8 +581,6 @@ public class LogFile {
                 		
                 }
                 
-                // the condition to break out of this loop is when there is nothing to read
-                // there might be better of doing this, but not sure
                 while (true) {
                 		try {
                 			
