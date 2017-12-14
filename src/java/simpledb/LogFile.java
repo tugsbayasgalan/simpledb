@@ -456,14 +456,9 @@ public class LogFile {
 	private void rollback(long transactionId) throws IOException {
 		long firstLogRecord = this.tidToFirstLogRecord.get(transactionId);
 		this.raf.seek(firstLogRecord);
-		long end;
-		if (this.currentOffset == -1) {
-			end = raf.length();
-		} else {
-			end = this.currentOffset;
-		}
-		while (raf.getFilePointer() < end) {
-			
+		
+		while (true) {
+			try {
 				int logType = this.raf.readInt();
 				long currentTid = this.raf.readLong();
 
@@ -476,12 +471,14 @@ public class LogFile {
 
 					Page before = this.readPageData(raf);
 					Page after = this.readPageData(raf);
-
+					
+ 
 					if (currentTid == transactionId) {
 						PageId beforeId = before.getId();
-						Database.getBufferPool().discardPage(beforeId);
+						
 						DbFile dbFile = Database.getCatalog().getDatabaseFile(beforeId.getTableId());
 						dbFile.writePage(before);
+						Database.getBufferPool().discardPage(beforeId);
 
 					}
 
@@ -502,7 +499,9 @@ public class LogFile {
 				}
 
 				raf.readLong();
-
+			} catch (EOFException e) {
+				break;
+			}
 			
 		}
 
@@ -631,7 +630,7 @@ public class LogFile {
 
                 this.currentOffset = raf.getFilePointer();
                 for (Long transaction: currentTransactions) {
-                		this.rollback(transaction.longValue());
+                		this.rollback(transaction);
                 }
                 
                 

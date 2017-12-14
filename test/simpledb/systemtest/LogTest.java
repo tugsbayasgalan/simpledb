@@ -192,7 +192,7 @@ public class LogTest extends SimpleDbTestBase {
         t.commit();
     }
 
-    @Test public void TestAbort()
+   @Test public void TestAbort()
             throws IOException, DbException, TransactionAbortedException {
         setup();
         doInsert(hf1, 1, 2);
