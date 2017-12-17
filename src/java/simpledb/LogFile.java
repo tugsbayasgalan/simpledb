@@ -630,10 +630,7 @@ public class LogFile {
                 for (Long transaction: currentTransactions) {
                 		this.rollback(transaction);
                 }
-                
-                
-                
-                
+   
                 
             }
          }
